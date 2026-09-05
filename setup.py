@@ -1,0 +1,36 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="netguard-ai",
+    version="0.1.0",
+    description="Vendor-Agnostic Network Device Compliance Engine",
+    author="NetGuard AI Team (SIH)",
+    author_email="team@netguard-ai.local",
+    url="https://github.com/[YOUR_USERNAME]/netguard-ai",
+    packages=find_packages(),
+    python_requires=">=3.11",
+    install_requires=[
+        "streamlit>=1.28.0",
+        "fastapi>=0.104.0",
+        "pydantic>=2.5.0",
+        "pandas>=2.1.0",
+        "numpy>=1.26.0",
+        "sentence-transformers>=2.2.0",
+        "scikit-learn>=1.3.0",
+        "anthropic>=0.7.0",
+        "reportlab>=4.0.0",
+        "sqlalchemy>=2.0.0",
+        "pyyaml>=6.0.0",
+        "python-dotenv>=1.0.0",
+        "pytest>=7.4.0",
+    ],
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: System Administrators",
+        "Intended Audience :: Information Technology",
+        "Topic :: System :: Networking",
+        "Topic :: System :: Monitoring",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3.11",
+    ],
+)
