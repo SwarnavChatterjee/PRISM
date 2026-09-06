@@ -193,7 +193,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 Open an issue on GitHub or reach out to the team.
 
-**GitHub Issues:** https://github.com/[YOUR_USERNAME]/netguard-ai/issues
+**GitHub Issues:** https://github.com/[YOUR_USERNAME]/PRISM/issues
 
 ---
 
