@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![SIH Submission](https://img.shields.io/badge/Smart%20India%20Hackathon-2024-blue?style=for-the-badge)](https://www.sih.gov.in)
+[![SIH Submission](https://img.shields.io/badge/Smart%20India%20Hackathon-2026-blue?style=for-the-badge)](https://www.sih.gov.in)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-green?style=for-the-badge&logo=python)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 [![Status: MVP](https://img.shields.io/badge/Status-MVP%20Alpha-orange?style=for-the-badge)](https://github.com/your-org/prism)
