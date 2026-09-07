@@ -639,6 +639,7 @@ Made with ❤️ for the SIH community
 
 ---
 
-**Last Updated:** January 2025  
+**Last Updated:** Sep 2026
+
 **Status:** SIH Submission — MVP (Production-ready for demo)  
 **Next Major Release:** Phase 1 (Post-SIH)
