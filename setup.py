@@ -12,6 +12,7 @@ setup(
     install_requires=[
         "streamlit>=1.28.0",
         "fastapi>=0.104.0",
+        "python-multipart>=0.0.20",
         "pydantic>=2.5.0",
         "pandas>=2.1.0",
         "numpy>=1.26.0",

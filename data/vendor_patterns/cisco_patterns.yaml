@@ -1,0 +1,31 @@
+remote_access:
+  - pattern_name: ssh_version
+    schema_path: baseline.remote_access.ssh_version
+    regex: '^\s*ip ssh version (\d+)\s*$'
+    value_type: int
+  - pattern_name: telnet_disabled
+    schema_path: baseline.remote_access.telnet_enabled
+    regex: '^\s*no ip telnet server\s*$'
+    value: false
+  - pattern_name: telnet_enabled
+    schema_path: baseline.remote_access.telnet_enabled
+    regex: '^\s*ip telnet server\s*$'
+    value: true
+  - pattern_name: http_management_disabled
+    schema_path: baseline.remote_access.http_management_enabled
+    regex: '^\s*no ip http server\s*$'
+    value: false
+authentication:
+  - pattern_name: password_min_length
+    schema_path: baseline.authentication.min_password_length
+    regex: '^\s*security passwords min-length (\d+)\s*$'
+    value_type: int
+  - pattern_name: aaa_enabled
+    schema_path: baseline.authentication.aaa_enabled
+    regex: '^\s*aaa new-model\s*$'
+    value: true
+logging:
+  - pattern_name: syslog
+    schema_path: baseline.logging.syslog_configured
+    regex: '^\s*logging host \S+\s*$'
+    value: true

@@ -1,0 +1,31 @@
+- id: CIS-1.1
+  name: SSH version 2 enforced
+  schema_path: baseline.remote_access.ssh_version
+  operator: ==
+  expected_value: 2
+  severity: high
+  remediation_template: ip ssh version 2
+
+- id: CIS-1.2
+  name: Telnet management disabled
+  schema_path: baseline.remote_access.telnet_enabled
+  operator: ==
+  expected_value: false
+  severity: critical
+  remediation_template: no ip telnet server
+
+- id: CIS-1.3
+  name: HTTP management disabled
+  schema_path: baseline.remote_access.http_management_enabled
+  operator: ==
+  expected_value: false
+  severity: high
+  remediation_template: no ip http server
+
+- id: CIS-2.1
+  name: AAA authentication enabled
+  schema_path: baseline.authentication.aaa_enabled
+  operator: ==
+  expected_value: true
+  severity: high
+  remediation_template: aaa new-model

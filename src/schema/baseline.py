@@ -3,7 +3,7 @@ Security Baseline Model — Canonical Schema
 Vendor-neutral representation of device security configuration
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 
 class DeviceInfo(BaseModel):
@@ -31,14 +31,14 @@ class AccessControl(BaseModel):
     default_deny_present: Optional[bool] = None
 
 class SecurityBaseline(BaseModel):
-    remote_access: RemoteAccess = RemoteAccess()
-    authentication: Authentication = Authentication()
-    logging: Logging = Logging()
-    access_control: AccessControl = AccessControl()
+    remote_access: RemoteAccess = Field(default_factory=RemoteAccess)
+    authentication: Authentication = Field(default_factory=Authentication)
+    logging: Logging = Field(default_factory=Logging)
+    access_control: AccessControl = Field(default_factory=AccessControl)
 
 class DeviceConfig(BaseModel):
     device: DeviceInfo
     baseline: SecurityBaseline
-    unmapped_lines: List[Dict[str, Any]] = []
-    provenance: Dict[str, Dict] = {}
-    metadata: Dict[str, Any] = {}
+    unmapped_lines: List[Dict[str, Any]] = Field(default_factory=list)
+    provenance: Dict[str, Dict] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
