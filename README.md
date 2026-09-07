@@ -610,7 +610,7 @@ PRISM is released under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-Built for **Smart India Hackathon (SIH) 2024** by a team of engineers passionate about making network security simpler and scalable.
+Built for **Smart India Hackathon (SIH) 2026** by a team of engineers passionate about making network security simpler and scalable.
 
 Special thanks to:
 - The open-source community (Python, Streamlit, ReportLab, sentence-transformers, Netmiko)
