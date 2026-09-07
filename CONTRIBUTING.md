@@ -1,4 +1,4 @@
-# Contributing to NetGuard AI
+# Contributing to PRISM
 
 ## For the SIH Team
 

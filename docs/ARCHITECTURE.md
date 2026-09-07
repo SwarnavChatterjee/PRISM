@@ -1,4 +1,4 @@
-# Architecture Document — NetGuard AI
+# Architecture Document — PRISM
 ## For SIH Judges
 
 ---
@@ -9,7 +9,7 @@
 Modern enterprises have heterogeneous networks (Cisco, Juniper, Palo Alto, etc.) that must comply with security frameworks (CIS, NIST, STIG, ISO). Each vendor uses different CLI syntax, making manual compliance checking slow and error-prone. Existing tools are vendor-locked and require code rewrites for new device types.
 
 ### Solution
-NetGuard AI is an AI-augmented, vendor-agnostic compliance engine that:
+PRISM is an AI-augmented, vendor-agnostic compliance engine that:
 1. **Normalizes** any vendor's config into a canonical schema using a three-tier AI cascade
 2. **Evaluates** against chosen compliance framework using data-driven rules
 3. **Learns** new vendors automatically through human-in-the-loop training
@@ -104,4 +104,3 @@ This satisfies enterprise audit requirements (NFR4).
 **Date:** [Today]  
 **Status:** SIH Submission (MVP)  
 **Contact:** [Team Lead Email]
-

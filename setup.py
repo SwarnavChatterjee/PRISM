@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="netguard-ai",
+    name="prism",
     version="0.1.0",
     description="Vendor-Agnostic Network Device Compliance Engine",
-    author="NetGuard AI Team (SIH)",
-    author_email="team@netguard-ai.local",
-    url="https://github.com/[YOUR_USERNAME]/netguard-ai",
+    author="PRISM Team (SIH)",
+    author_email="team@prism.local",
+    url="https://github.com/[YOUR_USERNAME]/prism",
     packages=find_packages(),
     python_requires=">=3.11",
     install_requires=[
