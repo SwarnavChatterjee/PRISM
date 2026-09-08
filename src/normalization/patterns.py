@@ -35,8 +35,11 @@ def match_line(line: str, patterns: Dict[str, List[dict]]) -> Optional[PatternMa
             if not match:
                 continue
             value = pattern.get("value", True)
-            if match.groups():
-                value = _convert_type(match.group(1), pattern.get("value_type", "str"))
+            value_type = pattern.get("value_type", "str")
+            if value_type == "increment":
+                value = {"__prism_operation__": "increment"}
+            elif match.groups() and "value" not in pattern:
+                value = _convert_type(match.group(1), value_type)
             return pattern["schema_path"], value, 1.0
     return None
 

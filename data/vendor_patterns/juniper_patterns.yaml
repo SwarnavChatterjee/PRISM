@@ -1,0 +1,139 @@
+# Juniper Junos ('set' syntax) vendor pattern library — PRISM
+#
+# Junos configuration is commonly captured/exported as flat 'set' statements
+# (`show configuration | display set`), which is the format these patterns
+# target. All patterns are anchored where the statement has a fixed shape.
+
+remote_access:
+  - pattern_name: ssh_protocol_version_2
+    schema_path: baseline.remote_access.ssh_version
+    regex: '^\s*set system services ssh protocol-version v2\s*$'
+    value: 2
+    value_type: int
+    description: Restricts SSH to protocol version 2 only.
+    source: "Conceptual equivalent of CIS Cisco IOS control 2.1.1.2 — Junos-specific syntax; no direct CIS Junos benchmark control ID confirmed."
+
+  - pattern_name: telnet_service_present
+    schema_path: baseline.remote_access.telnet_enabled
+    regex: '^\s*set system services telnet\s*$'
+    value: true
+    description: Telnet management service explicitly enabled (insecure).
+    source: "DISA STIG pattern: secure protocols required instead of Telnet (see cis_benchmarks.yaml CIS-1.2)"
+
+  - pattern_name: telnet_service_absent
+    schema_path: baseline.remote_access.telnet_enabled
+    regex: '^\s*delete system services telnet\s*$'
+    value: false
+    description: >
+      Explicit deletion of the Telnet service line. Note: absence of
+      any 'set system services telnet' line in a config dump should
+      ALSO be treated as telnet_enabled=false by the normalizer's
+      default-value logic — this pattern only covers the case where
+      the delete was captured in a diff-style export.
+    source: "DISA STIG pattern (see cis_benchmarks.yaml CIS-1.2)"
+
+  - pattern_name: root_ssh_login_denied
+    schema_path: baseline.remote_access.root_ssh_login_enabled   # PROPOSED schema extension — see docs/schema-review.md
+    regex: '^\s*set system services ssh root-login deny\s*$'
+    value: false
+    description: Disables SSH login using the root account.
+    source: "DISA Juniper SRX SG NDM STIG, finding V-223212"
+
+  - pattern_name: root_ssh_login_allowed
+    schema_path: baseline.remote_access.root_ssh_login_enabled   # PROPOSED schema extension
+    regex: '^\s*set system services ssh root-login allow\s*$'
+    value: true
+    description: Explicitly allows SSH login using the root account (insecure).
+    source: "DISA Juniper SRX SG NDM STIG, finding V-223212 (negative case)"
+
+  - pattern_name: http_management_present
+    schema_path: baseline.remote_access.http_management_enabled
+    regex: '^\s*set system services web-management http\s*$'
+    value: true
+    description: Cleartext HTTP (J-Web) management service enabled.
+    source: "General web-management hardening guidance — confirm exact stanza name against target Junos release (see cis_benchmarks.yaml CIS-1.3 vendor_limitations)."
+
+  - pattern_name: http_management_absent
+    schema_path: baseline.remote_access.http_management_enabled
+    regex: '^\s*delete system services web-management http\s*$'
+    value: false
+    description: Cleartext HTTP (J-Web) management service explicitly removed.
+    source: "See cis_benchmarks.yaml CIS-1.3"
+
+authentication:
+  - pattern_name: aaa_authentication_order
+    schema_path: baseline.authentication.aaa_enabled
+    regex: '^\s*set system authentication-order \[.+\]\s*$'
+    value: true
+    description: >
+      Configures an ordered external/local authentication chain (e.g.
+      tacplus, radius, password). Any non-empty authentication-order
+      is treated as aaa_enabled=true per the vendor_limitations note
+      on CIS-1.4.
+    source: "See cis_benchmarks.yaml CIS-1.4 vendor_limitations"
+
+  - pattern_name: min_password_length
+    schema_path: baseline.authentication.min_password_length
+    regex: '^\s*set system login password minimum-length (\d+)\s*$'
+    value_type: int
+    description: Minimum required password length for local login accounts.
+    source: "See cis_benchmarks.yaml CIS-1.6"
+
+  - pattern_name: login_retry_options
+    schema_path: baseline.authentication.aaa_enabled   # reused — lockout policy is supporting evidence, no dedicated field yet
+    regex: '^\s*set system login retry-options tries-before-disconnect (\d+)\s*$'
+    value: true
+    description: Configures account lockout / retry limiting after failed login attempts.
+    source: "DISA Juniper SRX SG NDM STIG family (login/authentication hardening)"
+
+logging:
+  - pattern_name: syslog_host
+    schema_path: baseline.logging.syslog_configured
+    regex: '^\s*set system syslog host (\S+) any any\s*$'
+    value: true
+    description: Remote syslog destination configured to receive all facilities/severities.
+    source: "See cis_benchmarks.yaml CIS-1.7 (needs verification against a specific control ID)"
+
+  - pattern_name: accounting_events
+    schema_path: baseline.logging.admin_access_logging
+    regex: '^\s*set system accounting events \[.+\]\s*$'
+    value: true
+    description: Enables accounting for login/change-log/interactive-command events.
+    source: "See cis_benchmarks.yaml CIS-1.8"
+
+management_plane:
+  - pattern_name: login_banner
+    schema_path: baseline.management.banner_configured   # PROPOSED schema extension
+    regex: '^\s*set system login message "?.+"?\s*$'
+    value: true
+    description: Login warning/legal banner text configured.
+    source: "See cis_benchmarks.yaml CIS-2.3"
+
+  - pattern_name: snmp_default_community_public
+    schema_path: baseline.management.snmp_default_community_present   # PROPOSED schema extension
+    regex: '^\s*set snmp community public\s*'
+    value: true
+    description: Default 'public' SNMP community string present (insecure).
+    source: "See cis_benchmarks.yaml CIS-2.2"
+
+  - pattern_name: snmp_default_community_removed
+    schema_path: baseline.management.snmp_default_community_present   # PROPOSED schema extension
+    regex: '^\s*delete snmp community public\s*$'
+    value: false
+    description: Default 'public' SNMP community string explicitly removed.
+    source: "See cis_benchmarks.yaml CIS-2.2"
+
+access_control:
+  - pattern_name: firewall_filter_term
+    schema_path: baseline.access_control.acl_count
+    regex: '^\s*set firewall filter (\S+) term (\S+) from '
+    value_type: increment
+    description: Declares a firewall filter term — counted toward acl_count (Junos' functional equivalent of a Cisco ACL entry).
+    source: "See cis_benchmarks.yaml CIS-1.10"
+
+  - pattern_name: firewall_filter_default_discard
+    schema_path: baseline.access_control.default_deny_present
+    regex: '^\s*set firewall filter \S+ term \S+ then discard\s*$'
+    value: true
+    description: Explicit discard (deny) term present in a firewall filter — evidence of default-deny posture.
+    source: "See cis_benchmarks.yaml CIS-1.9"

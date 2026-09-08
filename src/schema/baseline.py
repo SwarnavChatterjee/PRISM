@@ -18,7 +18,7 @@ class RemoteAccess(BaseModel):
     http_management_enabled: Optional[bool] = None
 
 class Authentication(BaseModel):
-    password_encryption: Optional[str] = None
+    password_encryption: Optional[bool] = None
     min_password_length: Optional[int] = None
     aaa_enabled: Optional[bool] = None
 

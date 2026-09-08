@@ -72,11 +72,16 @@ pip install -r requirements.txt
 # 4. Initialize database
 python -m src.storage.db
 
-# 5. Run PRISM
-streamlit run frontend/streamlit_app.py
+# 5. Start the API
+uvicorn api.main:app --reload --port 8000
+
+# 6. In another terminal, start the React frontend
+cd web
+npm install
+npm run dev
 ```
 
-**That's it.** Open http://localhost:8501 and you're ready.
+**That's it.** Open http://localhost:5173 and you're ready.
 
 ### First Scan (2 minutes)
 
@@ -250,7 +255,7 @@ Copy-paste ready. Security teams can implement fixes in minutes.
                  │
                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│       FRONTEND / DASHBOARD (Streamlit UI)                       │
+│       FRONTEND / DASHBOARD (React UI)                           │
 │  - Upload → Training Interface → Results → PDF Download         │
 └──────────────────────────────────────────────────────────────────┘
 ```
@@ -309,7 +314,7 @@ Copy-paste ready. Security teams can implement fixes in minutes.
 | **Language** | Python 3.11+ | Netmiko, spaCy, ReportLab all native here |
 | **Normalization** | Regex + sentence-transformers + Claude API | Cost-optimized three-tier cascade |
 | **Rules Engine** | YAML + custom Python evaluator | Data-driven; add frameworks without code changes |
-| **Frontend** | Streamlit (MVP) → React (production) | Fast MVP iteration, professional at scale |
+| **Frontend** | React + TypeScript + Vite | Production web client with a dedicated API |
 | **Database** | SQLite (MVP) → PostgreSQL (production) | Same schema; lightweight now, scalable later |
 | **Reporting** | ReportLab | Fine-grained PDF control for enterprise reports |
 | **Testing** | pytest | Industry standard; full coverage |
@@ -345,12 +350,8 @@ prism/
 │   │   └── ...
 │   └── sample_configs/               # Test configs for demo
 │
-├── frontend/
-│   ├── streamlit_app.py              # Main app entry
-│   └── pages/
-│       ├── 01_upload.py
-│       ├── 02_training.py            # Human-in-the-loop UI
-│       └── 03_results.py
+├── api/                              # FastAPI HTTP layer
+├── web/                              # React + TypeScript frontend
 │
 ├── tests/                            # Unit & integration tests
 ├── docs/                             # Complete documentation
@@ -613,7 +614,7 @@ PRISM is released under the **MIT License**. See [LICENSE](LICENSE) for details.
 Built for **Smart India Hackathon (SIH) 2026** by a team of engineers passionate about making network security simpler and scalable.
 
 Special thanks to:
-- The open-source community (Python, Streamlit, ReportLab, sentence-transformers, Netmiko)
+- The open-source community (Python, React, ReportLab, sentence-transformers, Netmiko)
 - Our judges and mentors at SIH
 - Every network admin who helped us understand the real problem
 

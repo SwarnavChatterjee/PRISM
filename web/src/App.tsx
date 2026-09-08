@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import type { Analysis, Finding, Page } from "./types";
 import {
   analyzeConfiguration,
@@ -7,14 +7,9 @@ import {
   SCHEMA_OPTIONS,
 } from "./api";
 import {
-  SAMPLE_CISCO_CONFIG,
-  SAMPLE_JUNIPER_CONFIG,
-  createSampleFile,
-} from "./sampleData";
-import {
   ShieldCheck, AlertTriangle, FileCode2, Sparkles,
   ChevronDown, ChevronRight, Loader2, Check, Copy,
-  Download, Server, Upload, RefreshCw, X, Activity,
+  Download, Server, Upload, X, Activity,
   Layers, Terminal, ArrowRight, BarChart3,
 } from "lucide-react";
 
@@ -53,9 +48,9 @@ function TopNav({
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         <div style={{
           width: 28, height: 28, borderRadius: 8,
-          background: "linear-gradient(135deg, #6366f1, #4f46e5)",
+          background: "linear-gradient(135deg, var(--brand-400), var(--brand-600))",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 0 0 1px rgba(99,102,241,0.4), 0 2px 8px rgba(99,102,241,0.3)",
+          boxShadow: "0 0 0 1px rgba(29,89,100,0.35), 0 2px 8px rgba(29,89,100,0.22)",
         }}>
           <ShieldCheck size={15} color="#fff" />
         </div>
@@ -64,7 +59,7 @@ function TopNav({
         </span>
         <span style={{
           fontSize: 10, fontWeight: 600, padding: "1px 6px",
-          background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)",
+          background: "rgba(29,89,100,0.1)", border: "1px solid rgba(29,89,100,0.2)",
           borderRadius: 4, color: "var(--text-brand)", letterSpacing: "0.06em",
         }}>
           v1.0
@@ -87,8 +82,8 @@ function TopNav({
             {item.id === "findings" && failedCount > 0 && (
               <span style={{
                 minWidth: 16, height: 16, borderRadius: 99, padding: "0 4px",
-                background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.25)",
-                color: "var(--red-400)", fontSize: 10, fontWeight: 700,
+                background: "#f8e7e5", border: "1px solid #ecc1bc",
+                color: "#a32921", fontSize: 10, fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {failedCount}
@@ -117,10 +112,10 @@ function TopNav({
           <div style={{
             display: "flex", alignItems: "center", gap: 5,
             padding: "4px 10px", borderRadius: 99,
-            background: score >= 80 ? "rgba(34,197,94,0.1)" : score >= 50 ? "rgba(251,191,36,0.1)" : "rgba(239,68,68,0.1)",
-            border: `1px solid ${score >= 80 ? "rgba(34,197,94,0.2)" : score >= 50 ? "rgba(251,191,36,0.2)" : "rgba(239,68,68,0.2)"}`,
+            background: score >= 80 ? "#e5f3eb" : score >= 50 ? "#f8efd9" : "#f8e7e5",
+            border: `1px solid ${score >= 80 ? "#b9dec8" : score >= 50 ? "#e6d19c" : "#ecc1bc"}`,
             fontSize: 11, fontWeight: 700,
-            color: score >= 80 ? "var(--green-400)" : score >= 50 ? "var(--amber-400)" : "var(--red-400)",
+            color: score >= 80 ? "#1f6b45" : score >= 50 ? "#8a5c00" : "#a32921",
           }}>
             <ShieldCheck size={11} />
             {score}%
@@ -138,13 +133,13 @@ function ScoreRing({ score, size = 120 }: { score: number; size?: number }) {
   const radius = (size - 12) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-  const color = score >= 80 ? "#4ade80" : score >= 50 ? "#fbbf24" : "#f87171";
+  const color = score >= 80 ? "#1f6b45" : score >= 50 ? "#b37b08" : "#a32921";
 
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
         <circle cx={size / 2} cy={size / 2} r={radius}
-          fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
+          fill="none" stroke="#dfe4e7" strokeWidth={8} />
         <circle cx={size / 2} cy={size / 2} r={radius}
           fill="none" stroke={color} strokeWidth={8}
           strokeLinecap="round"
@@ -176,12 +171,12 @@ function StatCard({
   icon?: React.ReactNode;
 }) {
   const tones = {
-    green:   { icon: "rgba(34,197,94,0.1)",  iconBorder: "rgba(34,197,94,0.2)",  iconColor: "#4ade80",  val: "#4ade80" },
-    red:     { icon: "rgba(239,68,68,0.1)",   iconBorder: "rgba(239,68,68,0.2)",   iconColor: "#f87171",  val: "#f87171" },
-    amber:   { icon: "rgba(251,191,36,0.1)",  iconBorder: "rgba(251,191,36,0.2)",  iconColor: "#fbbf24",  val: "#fbbf24" },
-    blue:    { icon: "rgba(96,165,250,0.1)",  iconBorder: "rgba(96,165,250,0.2)",  iconColor: "#60a5fa",  val: "#60a5fa" },
-    purple:  { icon: "rgba(192,132,252,0.1)", iconBorder: "rgba(192,132,252,0.2)", iconColor: "#c084fc",  val: "#c084fc" },
-    default: { icon: "rgba(255,255,255,0.05)", iconBorder: "var(--border-default)", iconColor: "var(--text-secondary)", val: "var(--text-primary)" },
+    green:   { icon: "#e5f3eb", iconBorder: "#b9dec8", iconColor: "#1f6b45", val: "#1f6b45" },
+    red:     { icon: "#f8e7e5", iconBorder: "#ecc1bc", iconColor: "#a32921", val: "#a32921" },
+    amber:   { icon: "#f8efd9", iconBorder: "#e6d19c", iconColor: "#8a5c00", val: "#8a5c00" },
+    blue:    { icon: "#e5eff5", iconBorder: "#c1d7e5", iconColor: "#28658a", val: "#28658a" },
+    purple:  { icon: "#eee9f6", iconBorder: "#d8c9e8", iconColor: "#684c88", val: "#684c88" },
+    default: { icon: "#edf0f2", iconBorder: "var(--border-default)", iconColor: "var(--text-secondary)", val: "var(--text-primary)" },
   };
   const t = tones[tone];
 
@@ -213,12 +208,9 @@ function StatCard({
 /* ============================================================
    Upload Zone
    ============================================================ */
-function UploadZone({
-  file, onFile, onLoadSample,
-}: {
+function UploadZone({ file, onFile }: {
   file: File | null;
   onFile: (f: File | null) => void;
-  onLoadSample: (t?: "cisco" | "juniper") => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -242,7 +234,7 @@ function UploadZone({
       <input
         ref={inputRef}
         type="file"
-        accept=".cfg,.conf,.txt,.log"
+        accept=".cfg,.conf,.config,.set,.txt,.log"
         style={{ display: "none" }}
         onChange={(e) => onFile(e.target.files?.[0] ?? null)}
       />
@@ -251,10 +243,10 @@ function UploadZone({
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12,
-            background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)",
+            background: "#e5f3eb", border: "1px solid #b9dec8",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <Check size={20} style={{ color: "#4ade80" }} />
+            <Check size={20} style={{ color: "#1f6b45" }} />
           </div>
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{file.name}</p>
@@ -267,7 +259,7 @@ function UploadZone({
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12,
-            background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)",
+            background: "#e5eff0", border: "1px solid #c2dadd",
             display: "flex", alignItems: "center", justifyContent: "center",
           }} className="animate-float">
             <Upload size={20} style={{ color: "var(--brand-400)" }} />
@@ -280,22 +272,6 @@ function UploadZone({
               .cfg · .conf · .txt · .log · or{" "}
               <span style={{ color: "var(--brand-400)", textDecoration: "underline" }}>browse</span>
             </p>
-          </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
-            <button
-              className="btn btn-ghost"
-              style={{ fontSize: 11, padding: "4px 10px" }}
-              onClick={() => onLoadSample("cisco")}
-            >
-              <Terminal size={11} /> Load Cisco Sample
-            </button>
-            <button
-              className="btn btn-ghost"
-              style={{ fontSize: 11, padding: "4px 10px" }}
-              onClick={() => onLoadSample("juniper")}
-            >
-              <Terminal size={11} /> Load Juniper Sample
-            </button>
           </div>
         </div>
       )}
@@ -315,11 +291,11 @@ function FindingItem({ finding, defaultOpen = false }: { finding: Finding; defau
   const statusClass = isCritical ? "critical" : isFail ? "fail" : "pass";
 
   const severityColor = {
-    critical: "#fca5a5",
-    high:     "#fdba74",
-    medium:   "#fcd34d",
-    low:      "#94a3b8",
-    informational: "#60a5fa",
+    critical: "#a32921",
+    high:     "#a34f13",
+    medium:   "#8a5c00",
+    low:      "#68717a",
+    informational: "#28658a",
   }[finding.severity] ?? "var(--text-secondary)";
 
   const copyRemediation = (e: React.MouseEvent) => {
@@ -335,9 +311,9 @@ function FindingItem({ finding, defaultOpen = false }: { finding: Finding; defau
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
           <div style={{ flexShrink: 0 }}>
             {isFail ? (
-              <AlertTriangle size={14} style={{ color: isCritical ? "#f87171" : "#fb923c" }} />
+              <AlertTriangle size={14} style={{ color: isCritical ? "#a32921" : "#a34f13" }} />
             ) : (
-              <Check size={14} style={{ color: "#4ade80" }} />
+              <Check size={14} style={{ color: "#1f6b45" }} />
             )}
           </div>
           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }} className="truncate">
@@ -366,7 +342,7 @@ function FindingItem({ finding, defaultOpen = false }: { finding: Finding; defau
               <pre style={{
                 background: "var(--bg-base)", border: "1px solid var(--border-subtle)",
                 borderRadius: 8, padding: "8px 10px", fontSize: 11, fontFamily: "var(--font-mono)",
-                color: "#93c5fd", overflowX: "auto",
+                color: "#385866", overflowX: "auto",
               }}>
                 <span style={{ opacity: 0.4, marginRight: 8 }}>L{finding.source_line}</span>
                 {finding.raw_config_line || "—"}
@@ -380,13 +356,13 @@ function FindingItem({ finding, defaultOpen = false }: { finding: Finding; defau
                   style={{ fontSize: 10, padding: "2px 6px", gap: 3 }}
                   onClick={copyRemediation}
                 >
-                  {copied ? <><Check size={10} style={{ color: "#4ade80" }} /> Copied</> : <><Copy size={10} /> Copy</>}
+                  {copied ? <><Check size={10} style={{ color: "#1f6b45" }} /> Copied</> : <><Copy size={10} /> Copy</>}
                 </button>
               </div>
               <pre style={{
                 background: "var(--bg-base)", border: "1px solid var(--border-subtle)",
                 borderRadius: 8, padding: "8px 10px", fontSize: 11, fontFamily: "var(--font-mono)",
-                color: "#86efac", overflowX: "auto",
+                color: "#326b51", overflowX: "auto",
               }}>
                 {finding.remediation_command || "No remediation required"}
               </pre>
@@ -411,7 +387,7 @@ function EmptyState({
     <div className="empty-state">
       <div style={{
         width: 56, height: 56, borderRadius: 16,
-        background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)",
+        background: "#e5eff0", border: "1px solid #c2dadd",
         display: "flex", alignItems: "center", justifyContent: "center",
         color: "var(--brand-400)", marginBottom: 4,
       }}>
@@ -475,16 +451,6 @@ export default function App() {
     }
   }
 
-  function loadSample(type: "cisco" | "juniper" = "cisco") {
-    if (type === "cisco") {
-      const s = createSampleFile("Core-Switch-01.cfg", SAMPLE_CISCO_CONFIG);
-      setSelectedFile(s); setSelectedVendor("cisco"); handleAnalyze(s, "cisco");
-    } else {
-      const s = createSampleFile("Edge-Router-01.conf", SAMPLE_JUNIPER_CONFIG);
-      setSelectedFile(s); setSelectedVendor("juniper"); handleAnalyze(s, "juniper");
-    }
-  }
-
   async function handleTrain(rawLine: string, schemaPath: string, mappedValue: string) {
     if (!analysis) return;
     setBusy(true); setError("");
@@ -507,8 +473,6 @@ export default function App() {
 
   const failedCount = analysis?.compliance.failed ?? 0;
 
-  useEffect(() => { loadSample("cisco"); }, []);
-
   return (
     <div className="page-root bg-mesh" style={{ background: "var(--bg-base)" }}>
       <TopNav page={page} setPage={setPage} score={score} activeFile={analysis?.filename} busy={busy} failedCount={failedCount} />
@@ -518,10 +482,10 @@ export default function App() {
         <div style={{
           position: "fixed", top: 52, left: 0, right: 0, zIndex: 40,
           padding: "10px 24px",
-          background: "rgba(239,68,68,0.1)", borderBottom: "1px solid rgba(239,68,68,0.2)",
+          background: "#f8e7e5", borderBottom: "1px solid #ecc1bc",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#fca5a5" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#a32921" }}>
             <AlertTriangle size={14} style={{ flexShrink: 0 }} />
             {error}
           </div>
@@ -532,8 +496,8 @@ export default function App() {
       )}
 
       <div className="page-content" style={{ paddingTop: error ? "3.5rem" : "2rem" }}>
-        {page === "overview"  && <OverviewPage analysis={analysis} score={score} onNavigate={setPage} onAnalyze={handleAnalyze} onLoadSample={loadSample} busy={busy} selectedFile={selectedFile} setSelectedFile={setSelectedFile} selectedVendor={selectedVendor} setSelectedVendor={setSelectedVendor} />}
-        {page === "analysis"  && <ConfigPage analysis={analysis} onAnalyze={handleAnalyze} onLoadSample={loadSample} busy={busy} selectedFile={selectedFile} setSelectedFile={setSelectedFile} selectedVendor={selectedVendor} setSelectedVendor={setSelectedVendor} />}
+        {page === "overview"  && <OverviewPage analysis={analysis} score={score} onNavigate={setPage} onAnalyze={handleAnalyze} busy={busy} selectedFile={selectedFile} setSelectedFile={setSelectedFile} selectedVendor={selectedVendor} setSelectedVendor={setSelectedVendor} />}
+        {page === "analysis"  && <ConfigPage analysis={analysis} onAnalyze={handleAnalyze} busy={busy} selectedFile={selectedFile} setSelectedFile={setSelectedFile} selectedVendor={selectedVendor} setSelectedVendor={setSelectedVendor} />}
         {page === "results"   && <CompliancePage analysis={analysis} onNavigate={setPage} />}
         {page === "findings"  && <FindingsPage analysis={analysis} onNavigate={setPage} />}
         {page === "training"  && <TrainingPage analysis={analysis} onTrain={handleTrain} busy={busy} onNavigate={setPage} />}
@@ -550,13 +514,12 @@ export default function App() {
    Page 1: Overview
    ============================================================ */
 function OverviewPage({
-  analysis, score, onNavigate, onAnalyze, onLoadSample,
+  analysis, score, onNavigate, onAnalyze,
   busy, selectedFile, setSelectedFile, selectedVendor, setSelectedVendor,
 }: {
   analysis: Analysis | null; score: number;
   onNavigate: (p: Page) => void;
   onAnalyze: (f?: File, v?: string) => void;
-  onLoadSample: (t?: "cisco" | "juniper") => void;
   busy: boolean;
   selectedFile: File | null; setSelectedFile: (f: File | null) => void;
   selectedVendor: string; setSelectedVendor: (v: string) => void;
@@ -585,9 +548,6 @@ function OverviewPage({
           <button className="btn btn-secondary" onClick={() => setShowUpload(!showUpload)}>
             <Upload size={13} /> {showUpload ? "Hide Upload" : "Upload Config"}
           </button>
-          <button className="btn btn-ghost" onClick={() => onLoadSample("cisco")} disabled={busy}>
-            <RefreshCw size={13} className={busy ? "animate-spin" : ""} /> Reload Sample
-          </button>
         </div>
       </div>
 
@@ -598,7 +558,7 @@ function OverviewPage({
             <Upload size={15} style={{ color: "var(--brand-400)" }} />
             <span style={{ fontSize: 13, fontWeight: 600 }}>Upload Device Configuration</span>
           </div>
-          <UploadZone file={selectedFile} onFile={setSelectedFile} onLoadSample={onLoadSample} />
+          <UploadZone file={selectedFile} onFile={setSelectedFile} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Vendor:</span>
@@ -655,16 +615,16 @@ function OverviewPage({
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { label: "Passed", count: compliance.passed, color: "#4ade80" },
-              { label: "Failed", count: compliance.failed, color: "#f87171" },
-              { label: "Critical", count: compliance.critical_count, color: "#f87171", bright: true },
+              { label: "Passed", count: compliance.passed, color: "#1f6b45" },
+              { label: "Failed", count: compliance.failed, color: "#a32921" },
+              { label: "Critical", count: compliance.critical_count, color: "#a32921", bright: true },
             ].map(({ label, count, color, bright }) => (
               <div key={label} style={{ display: "grid", gridTemplateColumns: "80px 1fr 40px", alignItems: "center", gap: 12 }}>
                 <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{label}</span>
                 <div className="progress-bar">
                   <div className="progress-bar-fill" style={{
                     width: `${(count / compliance.total_controls) * 100}%`,
-                    background: bright ? `linear-gradient(90deg, ${color}, #ff5555)` : color,
+                    background: bright ? `linear-gradient(90deg, ${color}, #c45b53)` : color,
                   }} />
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 700, color, textAlign: "right" }}>{count}</span>
@@ -696,9 +656,9 @@ function OverviewPage({
           <EmptyState
             icon={<ShieldCheck size={22} />}
             title="No Configuration Loaded"
-            desc="Upload a device configuration file or load a sample to run a compliance analysis."
-            action="Load Cisco Sample"
-            onAction={() => { onLoadSample("cisco"); setShowUpload(false); }}
+            desc="Upload a device configuration file to run a compliance analysis."
+            action="Open Configuration Upload"
+            onAction={() => onNavigate("analysis")}
           />
         </div>
       )}
@@ -710,12 +670,11 @@ function OverviewPage({
    Page 2: Config Analysis
    ============================================================ */
 function ConfigPage({
-  analysis, onAnalyze, onLoadSample, busy,
+  analysis, onAnalyze, busy,
   selectedFile, setSelectedFile, selectedVendor, setSelectedVendor,
 }: {
   analysis: Analysis | null;
   onAnalyze: (f?: File, v?: string) => void;
-  onLoadSample: (t?: "cisco" | "juniper") => void;
   busy: boolean;
   selectedFile: File | null; setSelectedFile: (f: File | null) => void;
   selectedVendor: string; setSelectedVendor: (v: string) => void;
@@ -732,7 +691,7 @@ function ConfigPage({
       />
 
       <div className="card" style={{ padding: "1.5rem", marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: 16 }}>
-        <UploadZone file={selectedFile} onFile={setSelectedFile} onLoadSample={onLoadSample} />
+        <UploadZone file={selectedFile} onFile={setSelectedFile} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Vendor:</span>
@@ -765,7 +724,7 @@ function ConfigPage({
                 navigator.clipboard.writeText(analysis.raw_config);
                 setCopiedRaw(true); setTimeout(() => setCopiedRaw(false), 2000);
               }}>
-                {copiedRaw ? <><Check size={10} style={{ color: "#4ade80" }} /> Copied</> : <><Copy size={10} /> Copy</>}
+                {copiedRaw ? <><Check size={10} style={{ color: "#1f6b45" }} /> Copied</> : <><Copy size={10} /> Copy</>}
               </button>
             </div>
             <pre className="code-block" style={{ borderRadius: 0, border: "none", maxHeight: 480, margin: 0 }}>
@@ -777,7 +736,7 @@ function ConfigPage({
           <div className="card" style={{ overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Layers size={14} style={{ color: "#4ade80" }} />
+                <Layers size={14} style={{ color: "#1f6b45" }} />
                 <span style={{ fontSize: 12, fontWeight: 600 }}>Normalized Baseline</span>
                 <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
                   {Object.keys(analysis.device_config.provenance).length} fields
@@ -787,7 +746,7 @@ function ConfigPage({
                 navigator.clipboard.writeText(JSON.stringify(analysis.device_config.baseline, null, 2));
                 setCopiedBase(true); setTimeout(() => setCopiedBase(false), 2000);
               }}>
-                {copiedBase ? <><Check size={10} style={{ color: "#4ade80" }} /> Copied</> : <><Copy size={10} /> Copy JSON</>}
+                {copiedBase ? <><Check size={10} style={{ color: "#1f6b45" }} /> Copied</> : <><Copy size={10} /> Copy JSON</>}
               </button>
             </div>
             <pre className="code-block green" style={{ borderRadius: 0, border: "none", maxHeight: 480, margin: 0 }}>
@@ -891,7 +850,7 @@ function FindingsPage({ analysis, onNavigate }: { analysis: Analysis | null; onN
   }
 
   const tiers = ["critical", "high", "medium", "low"] as const;
-  const tierColors = { critical: "#f87171", high: "#fb923c", medium: "#fbbf24", low: "#94a3b8" };
+  const tierColors = { critical: "#a32921", high: "#a34f13", medium: "#8a5c00", low: "#68717a" };
 
   return (
     <div className="animate-fade-up">
@@ -965,7 +924,7 @@ function TrainingPage({
           <div style={{
             display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
             background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)",
-            borderRadius: "var(--radius-lg)", marginBottom: "1rem", fontSize: 12, color: "#fcd34d",
+            borderRadius: "var(--radius-lg)", marginBottom: "1rem", fontSize: 12, color: "#8a5c00",
           }}>
             <Sparkles size={14} />
             {unmapped.length} unmapped line{unmapped.length !== 1 ? "s" : ""} awaiting classification.
@@ -993,7 +952,7 @@ function TrainingCard({ lineNo, raw, busy, onTrain }: {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{
           fontSize: 10, fontWeight: 700, padding: "2px 8px",
-          background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)",
+            background: "#e5eff0", border: "1px solid #c2dadd",
           borderRadius: 4, color: "var(--brand-400)", fontFamily: "var(--font-mono)",
         }}>
           LINE {lineNo}
@@ -1046,7 +1005,7 @@ function DevicesPage({ analysis, onNavigate }: { analysis: Analysis | null; onNa
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0 }}>
             {[
               { label: "Platform", value: analysis.vendor.toUpperCase(), color: "var(--text-primary)" },
-              { label: "Detection Confidence", value: `${Math.round(analysis.detection_confidence * 100)}%`, color: "#4ade80" },
+              { label: "Detection Confidence", value: `${Math.round(analysis.detection_confidence * 100)}%`, color: "#1f6b45" },
               { label: "Controls Passed", value: `${analysis.compliance.passed} / ${analysis.compliance.total_controls}`, color: "var(--text-primary)" },
             ].map(({ label, value, color }, i) => (
               <div key={i} style={{ padding: "1.25rem 1.5rem", borderRight: i < 2 ? "1px solid var(--border-subtle)" : "none" }}>
@@ -1119,8 +1078,8 @@ function SettingsPage() {
         </div>
         <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 16 }}>
           <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Deterministic Engine</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#4ade80" }}>
-            <span style={{ width: 8, height: 8, borderRadius: 99, background: "#4ade80", boxShadow: "0 0 6px #4ade80" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#1f6b45" }}>
+            <span style={{ width: 8, height: 8, borderRadius: 99, background: "#1f6b45", boxShadow: "0 0 6px #72aa8a" }} />
             Tier 1 Pattern Matching Engine Active
           </div>
           <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>Exact YAML regex mapping with zero hallucinatory outputs.</p>

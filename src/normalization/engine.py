@@ -35,6 +35,9 @@ class NormalizationEngine:
                 result = self.training_loop.apply_learned_mapping(line, self.vendor)
             if result:
                 schema_path, value, confidence = result
+                if isinstance(value, dict) and value.get("__prism_operation__") == "increment":
+                    current = self._get_nested_value(values, schema_path, default=0)
+                    value = current + 1
                 self._set_nested_value(values, schema_path, value)
                 provenance[schema_path] = {
                     "source_line": line_no,
@@ -77,6 +80,15 @@ class NormalizationEngine:
         for key in keys[:-1]:
             current = current.setdefault(key, {})
         current[keys[-1]] = value
+
+    @staticmethod
+    def _get_nested_value(obj: Dict[str, Any], path: str, default: Any = None) -> Any:
+        current: Any = obj
+        for key in path.split("."):
+            if not isinstance(current, dict) or key not in current:
+                return default
+            current = current[key]
+        return current
 
 
 def normalize_config(

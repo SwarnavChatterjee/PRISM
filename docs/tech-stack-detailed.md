@@ -61,7 +61,7 @@ This is the layer most worth being detailed and precise about — it's your tech
 
 | | MVP (Build) | Full Product Vision (PPT) |
 |---|---|---|
-| Interface | Built directly into the Streamlit app — a simple form: raw line + dropdown of categories + submit | Dedicated low-code labeling UI (could still be Streamlit-based, or a React component) with richer context (surrounding lines, vendor documentation lookup suggestions, confidence-scored auto-suggestions) |
+| Interface | React training screen with raw line + canonical-field selection + submit | Dedicated labeling UI with richer context (surrounding lines, vendor documentation lookup suggestions, confidence-scored auto-suggestions) |
 | Persistence of learned mappings | SQLite table `vendor_patterns(vendor, raw_pattern, schema_path, confidence, created_by, created_at)` | Same table structure in PostgreSQL, versioned, with an audit trail and possibly a review/approval workflow for enterprise deployments (a senior admin approves a junior admin's new mapping before it's trusted org-wide) |
 
 ---
@@ -71,7 +71,7 @@ This is the layer most worth being detailed and precise about — it's your tech
 | | MVP (Build) | Full Product Vision (PPT) |
 |---|---|---|
 | Language | Python | Python (core AI/compliance logic stays Python regardless of scale — this is a genuine, defensible constant) |
-| API framework | Not strictly needed if using Streamlit directly calling Python functions | **FastAPI** — async, auto-generated OpenAPI docs, natural fit if the frontend becomes a separate React app or if third-party integrations are needed (e.g., a CI/CD pipeline calling the compliance engine via API) |
+| API framework | **FastAPI** — async, auto-generated OpenAPI docs, and a natural fit for the React client and third-party integrations | Extend the API for CI/CD and other integrations |
 | Task handling | Synchronous, in-process (fine for single-file, single-user demo) | Background task queue — **Celery** with **Redis** as broker, for bulk scans across hundreds of devices without blocking the UI |
 
 ---
@@ -80,7 +80,7 @@ This is the layer most worth being detailed and precise about — it's your tech
 
 | | MVP (Build) | Full Product Vision (PPT) |
 |---|---|---|
-| Framework | **Streamlit** — fastest path to a working multi-screen Python-native UI for a 5-day build | **React** (with a component library like MUI or shadcn/ui) for a polished, production-grade multi-user dashboard; Streamlit mentioned as "what we validated the UX with" |
+| Framework | **React + TypeScript + Vite** — dedicated multi-screen client for the current build | React with a component library like MUI or shadcn/ui for a polished, production-grade multi-user dashboard |
 | Screens | Upload → Processing status → Training interface → Results/Report download (4 screens) | Same 4 core flows, plus: multi-device fleet view, compliance trend/drift dashboard over time, user/role management, framework/rule management console |
 | Charting (for trend views) | Not built in MVP | **Recharts** or **Chart.js** for compliance-over-time visualizations |
 
@@ -156,7 +156,7 @@ This is the layer most worth being detailed and precise about — it's your tech
 
 **Backend:** FastAPI (production) / direct Python functions (MVP)
 
-**Frontend:** Streamlit (MVP) → React + MUI (production)
+**Frontend:** React + TypeScript + Vite
 
 **Database:** SQLite (MVP) → PostgreSQL (production), with S3/Blob Storage for raw files and reports
 
@@ -169,4 +169,4 @@ This is the layer most worth being detailed and precise about — it's your tech
 ---
 
 ## 15. One Sentence to Say If Asked "Is This Really What You Built?"
-**"The architecture is identical at every scale — we built the lightweight version of every layer (SQLite instead of Postgres, Streamlit instead of React, single-machine instead of Kubernetes) so the exact same code and logic can be pointed at production infrastructure without a redesign — we're demoing the engine, not a mockup of it."**
+**"The architecture is identical at every scale — we built the lightweight version of every layer (SQLite instead of Postgres, FastAPI + React instead of a monolithic UI, single-machine instead of Kubernetes) so the same engine and API can be pointed at production infrastructure without a redesign."**

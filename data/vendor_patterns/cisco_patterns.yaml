@@ -1,31 +1,235 @@
+# Cisco IOS / IOS-XE vendor pattern library — PRISM
+#
+# Each pattern maps one recognizable line of Cisco IOS config text to a
+# canonical schema path. `value` = fixed literal to assign when matched.
+# `value_type` = type to coerce a captured group into.
+#
+# Patterns are anchored (^...$) wherever the line has a fixed, known shape.
+# Where IOS allows optional whitespace/arguments we use \s* / optional groups
+# rather than loosening the anchors, to avoid false-positive matches on
+# unrelated lines.
+
 remote_access:
   - pattern_name: ssh_version
     schema_path: baseline.remote_access.ssh_version
     regex: '^\s*ip ssh version (\d+)\s*$'
     value_type: int
-  - pattern_name: telnet_disabled
+    description: Cisco IOS SSH protocol version directive.
+    source: "CIS Cisco IOS Benchmark control 2.1.1.2"
+
+  - pattern_name: telnet_transport_disabled
+    schema_path: baseline.remote_access.telnet_enabled
+    regex: '^\s*transport input ssh\s*$'
+    value: false
+    description: >
+      vty transport restricted to SSH only — Telnet is implicitly
+      disabled for this line. Applied per-vty-block; normalizer should
+      treat presence anywhere in a vty block as telnet_enabled=false
+      for that block.
+    source: "CIS Cisco IOS Benchmark control 1.2.2"
+
+  - pattern_name: telnet_server_disabled_legacy
     schema_path: baseline.remote_access.telnet_enabled
     regex: '^\s*no ip telnet server\s*$'
     value: false
-  - pattern_name: telnet_enabled
+    description: Legacy global Telnet-disable syntax retained for compatibility with existing PRISM fixtures.
+    source: "PRISM compatibility pattern; prefer line vty transport input ssh for current IOS configurations."
+
+  - pattern_name: telnet_transport_enabled
     schema_path: baseline.remote_access.telnet_enabled
-    regex: '^\s*ip telnet server\s*$'
+    regex: '^\s*transport input (telnet|all)\s*$'
     value: true
-  - pattern_name: http_management_disabled
+    description: vty line explicitly permits Telnet (or all protocols, which includes Telnet).
+    source: "CIS Cisco IOS Benchmark control 1.2.2 (negative case)"
+
+  - pattern_name: telnet_transport_none
+    schema_path: baseline.remote_access.telnet_enabled
+    regex: '^\s*transport input none\s*$'
+    value: false
+    description: Line transport fully disabled (e.g. aux port hardening) — no Telnet possible.
+    source: "CIS Cisco IOS Benchmark control 1.2.10"
+
+  - pattern_name: http_server_disabled
     schema_path: baseline.remote_access.http_management_enabled
     regex: '^\s*no ip http server\s*$'
     value: false
-authentication:
-  - pattern_name: password_min_length
-    schema_path: baseline.authentication.min_password_length
-    regex: '^\s*security passwords min-length (\d+)\s*$'
+    description: Cleartext HTTP management server disabled.
+    source: "CIS Cisco IOS Benchmark control family 1.2.11/1.2.12"
+
+  - pattern_name: http_secure_server_disabled
+    schema_path: baseline.remote_access.http_management_enabled
+    regex: '^\s*no ip http secure-server\s*$'
+    value: false
+    description: HTTPS management server disabled.
+    source: "CIS Cisco IOS Benchmark control family 1.2.11/1.2.12"
+
+  - pattern_name: http_server_enabled
+    schema_path: baseline.remote_access.http_management_enabled
+    regex: '^\s*ip http server\s*$'
+    value: true
+    description: Cleartext HTTP management server explicitly enabled (insecure).
+    source: "CIS Cisco IOS Benchmark control family 1.2.11/1.2.12 (negative case)"
+
+  - pattern_name: exec_timeout
+    schema_path: baseline.remote_access.exec_timeout_minutes   # PROPOSED schema extension — see docs/schema-review.md
+    regex: '^\s*exec-timeout (\d+) ?\d*\s*$'
     value_type: int
-  - pattern_name: aaa_enabled
+    description: >
+      Minutes portion of 'exec-timeout <min> <sec>' on a line
+      (console/aux/tty/vty). Only the minutes group is captured;
+      normalizer should treat 'exec-timeout 0 0' as no timeout
+      (fails the <=10 check by design, since 0 means "never").
+    source: "CIS Cisco IOS Benchmark controls 1.2.6-1.2.9"
+
+  - pattern_name: rsa_modulus
+    schema_path: baseline.remote_access.rsa_key_modulus_bits   # PROPOSED schema extension
+    regex: '^\s*crypto key generate rsa modulus (\d+)\s*$'
+    value_type: int
+    description: RSA host key modulus size in bits.
+    source: "CIS Cisco IOS Benchmark control 2.1.1.1.3"
+
+  - pattern_name: root_ssh_login_not_applicable
+    schema_path: baseline.remote_access.root_ssh_login_enabled   # PROPOSED schema extension
+    regex: 'NOT_APPLICABLE_ON_CISCO_IOS'
+    value_type: null
+    description: >
+      Placeholder — Cisco IOS has no 'root' account concept. This
+      control should be marked not_applicable for vendor=cisco in the
+      compliance engine rather than matched via a pattern. Left here
+      intentionally so the vendor_limitations note isn't lost.
+    source: "See cis_benchmarks.yaml CIS-2.6 vendor_limitations"
+
+authentication:
+  - pattern_name: aaa_new_model_enabled
     schema_path: baseline.authentication.aaa_enabled
     regex: '^\s*aaa new-model\s*$'
     value: true
+    description: Enables the AAA authentication/authorization/accounting subsystem.
+    source: "CIS Cisco IOS Benchmark control 1.1.1"
+
+  - pattern_name: password_encryption_enabled
+    schema_path: baseline.authentication.password_encryption
+    regex: '^\s*service password-encryption\s*$'
+    value: true
+    description: Enables type-7 encryption for locally stored passwords.
+    source: "CIS Cisco IOS Benchmark control 1.4.2"
+
+  - pattern_name: min_password_length
+    schema_path: baseline.authentication.min_password_length
+    regex: '^\s*security passwords min-length (\d+)\s*$'
+    value_type: int
+    description: Minimum required length for locally configured passwords.
+    source: "General CIS password-policy baseline (see cis_benchmarks.yaml CIS-1.6 — needs verification against a specific control ID)"
+
+authorization:
+  - pattern_name: enable_secret_set
+    schema_path: baseline.authentication.password_encryption   # reuses same schema path — presence of enable secret (hashed) vs enable password (reversible) is itself a form of "encryption applied"
+    regex: '^\s*enable secret \S+\s*$'
+    value: true
+    description: >
+      Hashed privileged-mode password set via 'enable secret' rather
+      than the legacy reversible 'enable password'. Treated as
+      supporting evidence for password_encryption, not a standalone
+      schema field, since no dedicated field exists yet.
+    source: "CIS Cisco IOS Benchmark control 1.4.1"
+
 logging:
-  - pattern_name: syslog
+  - pattern_name: syslog_host
     schema_path: baseline.logging.syslog_configured
     regex: '^\s*logging host \S+\s*$'
     value: true
+    description: Remote syslog destination configured.
+    source: "Cisco IOS logging reference (see cis_benchmarks.yaml CIS-1.7 — needs verification against a specific CIS control ID)"
+
+  - pattern_name: syslog_host_legacy
+    schema_path: baseline.logging.syslog_configured
+    regex: '^\s*logging \d{1,3}(\.\d{1,3}){3}\s*$'
+    value: true
+    description: Legacy 'logging <ip>' syntax (pre IOS 12.4 style), still seen in the wild.
+    source: "Cisco IOS logging reference"
+
+  - pattern_name: aaa_accounting_exec
+    schema_path: baseline.logging.admin_access_logging
+    regex: '^\s*aaa accounting exec default start-stop group \S+\s*$'
+    value: true
+    description: Logs start/stop of every EXEC (login) session for accountability.
+    source: "CIS Cisco IOS Benchmark control family 1.1.7"
+
+  - pattern_name: aaa_accounting_commands
+    schema_path: baseline.logging.admin_access_logging
+    regex: '^\s*aaa accounting commands 15 default start-stop group \S+\s*$'
+    value: true
+    description: Logs every privilege-level-15 (privileged EXEC) command issued.
+    source: "CIS Cisco IOS Benchmark control 1.1.7"
+
+management_plane:
+  - pattern_name: banner_login
+    schema_path: baseline.management.banner_configured   # PROPOSED schema extension
+    regex: '^\s*banner login \^C'
+    value: true
+    description: Login warning banner configured (delimiter style banner).
+    source: "CIS Cisco IOS Benchmark control 1.3.2"
+
+  - pattern_name: banner_motd
+    schema_path: baseline.management.banner_configured   # PROPOSED schema extension
+    regex: '^\s*banner motd \^C'
+    value: true
+    description: Message-of-the-day warning banner configured.
+    source: "CIS Cisco IOS Benchmark control 1.3.3"
+
+  - pattern_name: cdp_disabled
+    schema_path: baseline.management.cdp_enabled   # PROPOSED schema extension
+    regex: '^\s*no cdp run\s*$'
+    value: false
+    description: Cisco Discovery Protocol disabled globally.
+    source: "CIS Cisco IOS Benchmark control 2.1.2"
+
+  - pattern_name: cdp_enabled_default
+    schema_path: baseline.management.cdp_enabled   # PROPOSED schema extension
+    regex: '^\s*cdp run\s*$'
+    value: true
+    description: CDP explicitly (re-)enabled globally.
+    source: "CIS Cisco IOS Benchmark control 2.1.2 (negative case)"
+
+  - pattern_name: snmp_default_community_public
+    schema_path: baseline.management.snmp_default_community_present   # PROPOSED schema extension
+    regex: '^\s*snmp-server community public(\s+(RO|RW))?\s*$'
+    value: true
+    description: Default 'public' SNMP community string still present (insecure).
+    source: "CIS Cisco IOS Benchmark control 1.5.3"
+
+  - pattern_name: snmp_default_community_private
+    schema_path: baseline.management.snmp_default_community_present   # PROPOSED schema extension
+    regex: '^\s*snmp-server community private(\s+(RO|RW))?\s*$'
+    value: true
+    description: Default 'private' SNMP community string still present (insecure).
+    source: "CIS Cisco IOS Benchmark control 1.5.2"
+
+  - pattern_name: snmp_community_custom
+    schema_path: baseline.management.snmp_default_community_present   # PROPOSED schema extension
+    regex: '^\s*snmp-server community (?!public|private)\S+(\s+(RO|RW))?\s*$'
+    value: false
+    description: Non-default SNMP community string configured (does not by itself guarantee an ACL is applied — see CIS-2.2 rationale).
+    source: "CIS Cisco IOS Benchmark control family 1.5"
+
+access_control:
+  - pattern_name: acl_extended_named
+    schema_path: baseline.access_control.acl_count
+    regex: '^\s*ip access-list extended (\S+)\s*$'
+    value_type: increment   # normalizer should increment a running counter, not assign a literal
+    description: Declares a named extended ACL — counted toward acl_count.
+    source: "General ACL-presence baseline (see cis_benchmarks.yaml CIS-1.10)"
+
+  - pattern_name: acl_numbered
+    schema_path: baseline.access_control.acl_count
+    regex: '^\s*access-list (\d+) (permit|deny) '
+    value_type: increment
+    description: Declares/extends a numbered ACL entry — counted toward acl_count.
+    source: "General ACL-presence baseline (see cis_benchmarks.yaml CIS-1.10)"
+
+  - pattern_name: acl_default_deny_log
+    schema_path: baseline.access_control.default_deny_present
+    regex: '^\s*deny ip any any( log)?\s*$'
+    value: true
+    description: Explicit catch-all deny statement at the end of an ACL — evidence of default-deny posture.
+    source: "CIS Cisco IOS Benchmark control family 3.2 (see cis_benchmarks.yaml CIS-1.9)"

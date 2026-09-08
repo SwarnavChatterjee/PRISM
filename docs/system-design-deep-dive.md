@@ -174,7 +174,7 @@ This is what separates you from "just another compliance scanner." Design requir
 - Generate from a template + the compliance engine's output — never hand-write text into the PDF generator; keep it data-driven like everything else.
 
 ### 4.7 Dashboard/Frontend
-- Base: Streamlit is genuinely fine for a 5-day hackathon (fast, Python-native, no separate frontend team needed) — don't over-invest in React unless someone already has it half-built.
+- Base: React with a FastAPI backend provides a maintainable web client while keeping the Python engine reusable.
 - Screens needed: Upload → Processing/Status → Training Interface (for unmapped lines) → Results/Report download. Four screens, not more.
 
 ---
@@ -217,7 +217,7 @@ This is what separates you from "just another compliance scanner." Design requir
 
 | Layer | Choice | Why |
 |---|---|---|
-| Core language | Python | Netmiko/NAPALM, spaCy, ReportLab, Streamlit all live here — one language, one team velocity |
+| Core language | Python | Netmiko/NAPALM, spaCy, ReportLab, and the compliance engine all live here |
 | Data collection | Netmiko | Broadest multi-vendor SSH driver support |
 | Normalization (rules tier) | Python `re` + a small DSL/YAML of patterns per vendor | Explainable, fast, easy to extend by adding YAML, not code |
 | Normalization (fuzzy tier) | `sentence-transformers` (embeddings) + cosine similarity | Lightweight, runs locally, no API cost, good enough for "is this similar to a known line" |
@@ -225,7 +225,7 @@ This is what separates you from "just another compliance scanner." Design requir
 | Rules storage | YAML files (or SQLite table) per framework | Non-engineers can read/extend rules; version-controllable |
 | Compliance engine | Plain Python rule evaluator over the YAML | No need for a heavyweight rules engine (e.g. Drools) at this scale |
 | Reporting | ReportLab | Fine-grained PDF layout control |
-| Frontend | Streamlit | Fastest path to a working multi-screen UI in Python, good enough for demo polish |
+| Frontend | React + TypeScript + Vite | Dedicated multi-screen web client backed by FastAPI |
 | Storage | SQLite | Zero-ops, portable, sufficient for hackathon scale |
 
 ---

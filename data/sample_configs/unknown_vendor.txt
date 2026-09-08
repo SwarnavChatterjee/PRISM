@@ -1,0 +1,52 @@
+# PRISM sample fixture: unknown_vendor.cfg
+# Fictional vendor/OS ("NexaOS") invented for this fixture — does not
+# correspond to any real product. All IPs use RFC 5737 documentation
+# ranges. Purpose: prove the training-loop / graceful-degradation path
+# (FR4/FR5, NFR3) on a syntax the normalizer has never seen.
+#
+# Some lines are written to *resemble* Cisco/Juniper concepts closely
+# enough that a human trainer can map them by inspection, but their
+# literal syntax will not match any existing cisco_patterns.yaml or
+# juniper_patterns.yaml regex — that's intentional.
+
+system-name = "CORE-NX-DOC05"
+zone-policy default = deny-all
+# ^ resembles a default-deny access control concept but uses a syntax
+#   ("zone-policy default = deny-all") not covered by any existing
+#   pattern -> should surface as unmapped, mappable by a trainer to
+#   baseline.access_control.default_deny_present = true.
+
+admin-access secure-shell version=2 timeout=600s
+# ^ resembles SSHv2 + timeout in one combined directive -> not a
+#   pattern match (regex expects Cisco's 'ip ssh version N' or
+#   Juniper's 'set system services ssh protocol-version v2') ->
+#   unmapped, requires training to split into two schema fields.
+
+legacy-console-access = enabled
+# ^ ambiguous: could mean Telnet-equivalent management access is on.
+#   No existing pattern covers this vendor's terminology -> unmapped,
+#   flagged for human judgment call during training.
+
+audit-stream target=198.51.100.10 proto=syslog
+# ^ resembles remote syslog configuration -> unmapped, mappable to
+#   baseline.logging.syslog_configured = true.
+
+credential-policy min-len=8 complexity=high
+# ^ resembles password policy -> partially mappable
+#   (min-len -> min_password_length) but "complexity=high" has no
+#   destination field at all -> a genuine schema-gap example for
+#   docs/schema-review.md.
+
+# The following two lines are intentionally NOT security-relevant at
+# all, to test that the normalizer doesn't force-match noise:
+comment: this device was racked in lab bay 4
+uptime-report interval=daily
+
+discovery-broadcast = on
+# ^ resembles CDP/LLDP-style discovery -> unmapped, mappable by a
+#   trainer to baseline.management.cdp_enabled-equivalent concept
+#   (or a new discovery_protocol_enabled field).
+
+mgmt-interface eth0 filter=MGMT-ONLY direction=inbound
+# ^ resembles an ACL binding -> unmapped, mappable to
+#   baseline.access_control.acl_count (increment).

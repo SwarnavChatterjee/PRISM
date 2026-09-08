@@ -1,4 +1,4 @@
-"""File-upload helpers used by the Streamlit MVP."""
+"""File-upload helpers used by the web application."""
 
 from __future__ import annotations
 

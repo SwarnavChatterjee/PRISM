@@ -67,12 +67,26 @@ def evaluate_rule(config_value: Any, rule: Dict[str, Any]) -> bool:
 class ComplianceEngine:
     def __init__(self, framework: str = "cis_benchmarks") -> None:
         self.framework = framework
-        self.rules = load_framework(framework)
+        self.rules = self._load_live_rules(framework)
+
+    @staticmethod
+    def _load_live_rules(framework: str) -> List[Dict[str, Any]]:
+        """Load only controls supported by the current baseline schema.
+
+        Research-stage controls remain in the framework file for provenance,
+        but are marked as proposed_schema_extension until their fields are
+        added to the canonical model.
+        """
+        return [
+            rule
+            for rule in load_framework(framework)
+            if rule.get("status") != "proposed_schema_extension"
+        ]
 
     def evaluate_device(self, device_config: Dict[str, Any], framework: Optional[str] = None) -> Dict[str, Any]:
         if framework and framework != self.framework:
             self.framework = framework
-            self.rules = load_framework(framework)
+            self.rules = self._load_live_rules(framework)
         findings = [self._evaluate_rule(device_config, rule) for rule in self.rules]
         failed = [finding for finding in findings if finding.status == "fail"]
         return {

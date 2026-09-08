@@ -42,10 +42,6 @@ DEFAULT_FRAMEWORK=cis_benchmarks
 # Claude API (for Tier 3 LLM fallback)
 ANTHROPIC_API_KEY=sk-...  # Get from https://console.anthropic.com/
 
-# Streamlit Config
-STREAMLIT_SERVER_PORT=8501
-STREAMLIT_SERVER_HEADLESS=true
-
 # Environment
 ENVIRONMENT=development  # or production
 

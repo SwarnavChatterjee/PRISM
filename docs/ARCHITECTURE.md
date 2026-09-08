@@ -38,7 +38,7 @@ PRISM is an AI-augmented, vendor-agnostic compliance engine that:
 | **Human-confirmed learning** | Trust. Never auto-commit a pattern without human review → guarantees correctness, prevents hallucination poisoning |
 | **Data-driven rules** | Extensibility. Framework rules stored as YAML, not code → adding CIS, NIST, STIG, ISO requires no code change |
 | **SQLite for MVP** | Speed to demo. Same schema as PostgreSQL → easy to upgrade later; no multi-user concurrency needed for 5-day sprint |
-| **Streamlit for UI** | Fast iteration. Python-native, no separate frontend team needed → working UI in days, not weeks |
+| **React + FastAPI for UI** | Dedicated frontend and API layers support a maintainable production web client |
 | **Static file upload (not live pull)** | Demo reliability. Live SSH adds credential management, network access, vendor-driver complexity → risky on demo day |
 
 ### Confidence Scoring
@@ -93,7 +93,7 @@ This satisfies enterprise audit requirements (NFR4).
 | **Core** | Python 3.11 | Python 3.11+ |
 | **Normalization** | regex + sentence-transformers + Claude API | Same, with fine-tuned domain model |
 | **Rules** | YAML files + Python evaluator | Same architecture, DB-driven UI |
-| **Frontend** | Streamlit | React + MUI |
+| **Frontend** | React + TypeScript + Vite | React + MUI |
 | **Database** | SQLite | PostgreSQL |
 | **Deployment** | Single VM | Kubernetes + load balancer |
 | **Reporting** | ReportLab (PDF) | Same + dashboard/API |

@@ -3,6 +3,8 @@
 
 *This is your actual execution blueprint. Print this, pin it on the wall, reference it constantly. Every line below is actionable.*
 
+> **Historical document:** This plan describes the original Streamlit MVP and is retained for project history. The current implementation uses the React frontend in `web/` and the FastAPI service in `api/`.
+
 ---
 
 ## 0. Pre-Day 1 Setup (Do this before Day 1 starts)

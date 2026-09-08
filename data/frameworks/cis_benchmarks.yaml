@@ -1,31 +1,395 @@
+# CIS MVP Control Set — PRISM
+#
+# Scope: ~15-20 high-value, config-checkable network-device controls,
+# drawn from the CIS Cisco IOS Benchmark family (v15/v16/v17) and the
+# DISA Juniper SRX Services Gateway NDM STIG (used here as a
+# cross-reference for Juniper remediation syntax, since CIS does not
+# currently publish a general-purpose Junos OS device benchmark with
+# the same numbering scheme Cisco uses).
+#
+# IMPORTANT — provenance notes:
+#   - Controls 1-10 below map directly to schema paths already defined
+#     in the Security Baseline Model (see docs/schema-review.md,
+#     section "Clean Mappings").
+#   - Controls 11-16 require a schema extension that does not exist
+#     yet. They are included here because they are genuinely
+#     high-value CIS/STIG controls, but their `schema_path` values are
+#     PROPOSED, not live. Do not wire these into the compliance engine
+#     until the primary developer approves the extension documented in
+#     docs/schema-review.md ("Proposed Schema Extensions"). They are
+#     marked with `status: proposed_schema_extension` below.
+#   - CIS benchmark control numbers differ across CIS Cisco IOS
+#     Benchmark versions (v15, v16, v17). Where I could not confirm a
+#     single stable ID across versions, I recorded the source version
+#     I verified against, rather than inventing a version-agnostic ID.
+#   - CIS benchmark text itself is copyrighted (CIS SecureSuite
+#     membership terms). Rationale text below is written in our own
+#     words, not copied from the benchmark PDF.
+
+# ---------------------------------------------------------------------------
+# GROUP 1: Controls that map cleanly to the EXISTING baseline schema
+# ---------------------------------------------------------------------------
+
 - id: CIS-1.1
   name: SSH version 2 enforced
+  category: remote_access
   schema_path: baseline.remote_access.ssh_version
-  operator: ==
+  operator: "=="
   expected_value: 2
   severity: high
-  remediation_template: ip ssh version 2
+  remediation_template: "ip ssh version 2"
+  remediation:
+    cisco: "ip ssh version 2"
+    juniper: "set system services ssh protocol-version v2"
+  rationale: >
+    SSHv1 has known cryptographic weaknesses (weak integrity checking,
+    susceptibility to man-in-the-middle attacks). Forcing SSHv2 removes
+    a legacy downgrade path for remote administrative access.
+  references:
+    - source: "CIS Cisco IOS Benchmark (control family 2.1.1.2, 'Set version 2 for ip ssh version')"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against Tenable's published mirror of the CIS Cisco IOS 17 v1.0.0 L1 audit control list."
+  vendor_limitations: "Juniper's SSH protocol-version setting is a device-wide service setting, not a per-line setting like Cisco's 'ip ssh version 2' — this is a 1:1 conceptual match but not identical CLI structure."
 
 - id: CIS-1.2
-  name: Telnet management disabled
+  name: Telnet disabled on management lines
+  category: remote_access
   schema_path: baseline.remote_access.telnet_enabled
-  operator: ==
+  operator: "=="
   expected_value: false
-  severity: critical
-  remediation_template: no ip telnet server
+  severity: high
+  remediation_template: "line vty 0 4 / transport input ssh"
+  remediation:
+    cisco: "line vty 0 4\n transport input ssh"
+    juniper: "delete system services telnet"
+  rationale: >
+    Telnet transmits credentials and session data in cleartext. Any
+    device reachable from an untrusted segment with Telnet enabled is
+    trivially sniffable. This is one of the most consistently-cited
+    baseline findings across CIS, DISA STIG, and vendor hardening
+    guides for every platform.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control 1.2.2 'Set transport input ssh for line vty connections'"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list (Tenable mirror)."
+    - source: "DISA STIG guidance pattern (secure protocols required instead of Telnet)"
+      url: "https://stigviewer.com/stig/cisco_ios_xe_router_ndm/2021-11-18/finding/V-215845"
+      access_note: "Cisco IOS XE Router NDM STIG, finding V-215845, verified 2026-09-07."
+  vendor_limitations: none
 
 - id: CIS-1.3
-  name: HTTP management disabled
+  name: HTTP web management interface disabled or restricted
+  category: management_plane
   schema_path: baseline.remote_access.http_management_enabled
-  operator: ==
+  operator: "=="
   expected_value: false
-  severity: high
-  remediation_template: no ip http server
+  severity: medium
+  remediation_template: "no ip http server"
+  remediation:
+    cisco: "no ip http server\nno ip http secure-server"
+    juniper: "delete system services web-management http"
+  rationale: >
+    Unencrypted HTTP management exposes session cookies and credentials
+    to interception. If web management is required at all, only the
+    HTTPS variant should be enabled, and even then restricted by ACL.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control family 1.2.11/1.2.12 ('http Secure-server' / exec-timeout on ip http)"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list."
+  vendor_limitations: "Some Juniper platforms use 'j-web' rather than 'web-management' depending on OS branch; confirm exact stanza name against the target device's Junos release before relying on this pattern in production."
 
-- id: CIS-2.1
-  name: AAA authentication enabled
+- id: CIS-1.4
+  name: AAA authentication framework enabled
+  category: authentication
   schema_path: baseline.authentication.aaa_enabled
-  operator: ==
+  operator: "=="
   expected_value: true
   severity: high
-  remediation_template: aaa new-model
+  remediation_template: "aaa new-model"
+  remediation:
+    cisco: "aaa new-model\naaa authentication login default local"
+    juniper: "set system authentication-order [ tacplus password ]"
+  rationale: >
+    Centralized AAA (vs. local-only or no authentication) gives
+    accountability (who did what) and a single place to revoke access.
+    It is the foundation control that most other authentication and
+    logging controls depend on.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control 1.1.1 'Enable aaa new-model'"
+      url: "https://www.itsecure.hu/wp-content/uploads/2023/12/CIS_Cisco_IOS_16_Benchmark_v1.1.2.pdf"
+      access_note: "Verified against CIS Cisco IOS 16 Benchmark v1.1.2, section 1.1.1, mirrored PDF."
+  vendor_limitations: "Juniper's equivalent is 'authentication-order', which configures an ordered list of auth methods rather than a single boolean toggle; PRISM's normalizer should treat any non-empty, non-default authentication-order as aaa_enabled == true."
+
+- id: CIS-1.5
+  name: Password encryption enabled for locally stored passwords
+  category: authentication
+  schema_path: baseline.authentication.password_encryption
+  operator: "=="
+  expected_value: true
+  severity: medium
+  remediation_template: "service password-encryption"
+  remediation:
+    cisco: "service password-encryption"
+    juniper: "N/A — Junos encrypts secrets ($9$ format) by default when using 'set system root-authentication encrypted-password'"
+  rationale: >
+    Without this, Cisco IOS stores type-7 (trivially reversible) or
+    even plaintext passwords in the running/startup config. Anyone who
+    can read the config file recovers credentials instantly.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control 1.4.2 'Enable service password-encryption'"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list."
+  vendor_limitations: "This control is largely Cisco-specific — flag as 'not applicable' rather than 'fail' when normalizing a Juniper config, since Junos handles secret storage differently by default."
+
+- id: CIS-1.6
+  name: Minimum local password length enforced
+  category: authentication
+  schema_path: baseline.authentication.min_password_length
+  operator: ">="
+  expected_value: 8
+  severity: medium
+  remediation_template: "security passwords min-length 8"
+  remediation:
+    cisco: "security passwords min-length 8"
+    juniper: "set system login password minimum-length 8"
+  rationale: >
+    Short passwords are the single most common credential weakness
+    found in device audits. Eight characters is a widely-used
+    practical MVP baseline; NIST SP 800-63B guidance favors length
+    over complexity rules.
+  references:
+    - source: "General password-length hardening guidance consistent with CIS Password Policy controls across CIS OS benchmarks"
+      url: "Needs verification against a Cisco-IOS-specific numbered CIS control ID"
+      access_note: "I could not confirm a single stable CIS Cisco IOS control ID for this exact line across benchmark versions during this research pass — mark as Needs verification until Team Member 2 cross-checks the current CIS Cisco IOS Benchmark PDF directly."
+  vendor_limitations: none
+
+- id: CIS-1.7
+  name: Centralized syslog configured
+  category: logging
+  schema_path: baseline.logging.syslog_configured
+  operator: "=="
+  expected_value: true
+  severity: high
+  remediation_template: "logging host <syslog-server>"
+  remediation:
+    cisco: "logging host 198.51.100.10\nlogging trap informational"
+    juniper: "set system syslog host 198.51.100.10 any any"
+  rationale: >
+    Without a remote syslog target, log data lives only on local
+    device buffers that get overwritten and vanish on reboot or
+    reset — exactly when an incident investigation needs them most.
+  references:
+    - source: "Cisco IOS logging hardening guidance (SPAN/syslog configuration reference notes)"
+      url: "https://notes.generalzero.org/Blue%20Team/Cisco_IOS.html"
+      access_note: "Community blue-team reference notes documenting standard 'logging <IP>' / 'logging source-interface' syntax; cross-check against Cisco's own command reference before final publication."
+  vendor_limitations: none
+
+- id: CIS-1.8
+  name: Administrative access logging enabled
+  category: logging
+  schema_path: baseline.logging.admin_access_logging
+  operator: "=="
+  expected_value: true
+  severity: medium
+  remediation_template: "aaa accounting exec default start-stop group tacacs+"
+  remediation:
+    cisco: "aaa accounting exec default start-stop group tacacs+\naaa accounting commands 15 default start-stop group tacacs+"
+    juniper: "set system accounting events [ login change-log interactive-commands ]"
+  rationale: >
+    Logging that AAA is enabled is not the same as logging what
+    administrators actually did once logged in. This control captures
+    session and command-level accountability, which is what auditors
+    ask for after an incident.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control family 1.1.7 (aaa accounting for privileged commands)"
+      url: "https://www.itsecure.hu/wp-content/uploads/2023/12/CIS_Cisco_IOS_16_Benchmark_v1.1.2.pdf"
+      access_note: "Verified against CIS Cisco IOS 16 Benchmark v1.1.2 table of contents, section 1.1.7."
+  vendor_limitations: none
+
+- id: CIS-1.9
+  name: Default-deny access control present on external-facing interfaces
+  category: access_control
+  schema_path: baseline.access_control.default_deny_present
+  operator: "=="
+  expected_value: true
+  severity: high
+  remediation_template: "access-list ... deny ip any any log (implicit or explicit)"
+  remediation:
+    cisco: "ip access-list extended EXTERNAL-IN\n deny ip any any log"
+    juniper: "set firewall filter EXTERNAL-IN term default then log\nset firewall filter EXTERNAL-IN term default then discard"
+  rationale: >
+    A default-permit posture on any externally-reachable interface
+    means every future misconfiguration is fail-open. Default-deny
+    (with explicit permits) is the single highest-leverage access
+    control decision on the device.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control family 3.2 ('Set ip access-list extended to forbid private source addresses from external networks' and related perimeter ACL controls)"
+      url: "https://community.infoblox.com/discussion/22215/cis-cisco-update-22-march-2021"
+      access_note: "Community-maintained changelog of CIS Cisco control numbering; cross-reference against the current CIS Cisco IOS Benchmark PDF before finalizing the exact control ID."
+  vendor_limitations: none
+
+- id: CIS-1.10
+  name: At least one access control list defined on the device
+  category: access_control
+  schema_path: baseline.access_control.acl_count
+  operator: ">="
+  expected_value: 1
+  severity: low
+  remediation_template: "access-list 100 ..."
+  remediation:
+    cisco: "ip access-list extended MGMT-IN\n permit tcp 198.51.100.0 0.0.0.255 any eq 22"
+    juniper: "set firewall filter MGMT-IN term allow-ssh from source-address 198.51.100.0/24"
+  rationale: >
+    A simple sanity check: a device with zero ACLs defined anywhere
+    almost certainly has no meaningful access segmentation. This is
+    intentionally a coarse, low-severity signal — it's a smoke test,
+    not a substitute for CIS-1.9's default-deny check.
+  references:
+    - source: "General network segmentation best practice, consistent with CIS Controls v8 (Network Infrastructure Management)"
+      url: "https://thwack.solarwinds.com/discussions?tagID=3775"
+      access_note: "General community discussion confirming ACL-presence is a commonly audited baseline item; not a specific numbered CIS Cisco IOS control — treat as a PRISM-taxonomy-level control, not a direct CIS ID citation."
+  vendor_limitations: none
+
+# ---------------------------------------------------------------------------
+# GROUP 2: High-value controls that need a SCHEMA EXTENSION before they can
+# be wired into the compliance engine. schema_path values here are PROPOSED.
+# See docs/schema-review.md before using these in src/compliance/engine.py.
+# ---------------------------------------------------------------------------
+
+- id: CIS-2.1
+  name: Exec timeout enforced on all management lines
+  category: management_plane
+  schema_path: baseline.remote_access.exec_timeout_minutes   # PROPOSED — does not exist yet
+  status: proposed_schema_extension
+  operator: "<="
+  expected_value: 10
+  severity: medium
+  remediation_template: "exec-timeout 10 0"
+  remediation:
+    cisco: "line vty 0 4\n exec-timeout 10 0"
+    juniper: "set system login idle-timeout 10"
+  rationale: >
+    An administrative session left open indefinitely on an unattended
+    terminal is a common real-world compromise vector. This is one of
+    the most frequently repeated controls in the CIS Cisco IOS
+    Benchmark (it appears separately for aux, console, tty, and vty
+    lines).
+  references:
+    - source: "CIS Cisco IOS Benchmark, controls 1.2.6-1.2.9 (exec-timeout for aux/console/tty/vty lines)"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list."
+  vendor_limitations: "Cisco expresses this per-line (aux/console/tty/vty); Junos expresses it as one device-wide idle-timeout. Recommend the schema extension store a single effective value with a note on which lines it was derived from, in provenance."
+
+- id: CIS-2.2
+  name: Default/well-known SNMP community strings removed
+  category: management_plane
+  schema_path: baseline.management.snmp_default_community_present   # PROPOSED
+  status: proposed_schema_extension
+  operator: "=="
+  expected_value: false
+  severity: high
+  remediation_template: "no snmp-server community public"
+  remediation:
+    cisco: "no snmp-server community public\nno snmp-server community private"
+    juniper: "delete snmp community public"
+  rationale: >
+    'public'/'private' SNMP community strings are the textbook
+    default-credential finding — trivially guessable and frequently
+    left in place. Read-write ('RW') access with a default string is
+    effectively an unauthenticated device takeover.
+  references:
+    - source: "CIS Cisco IOS Benchmark, controls 1.5.2-1.5.4 (unset 'private'/'public' community, no RW on any community)"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list."
+  vendor_limitations: none
+
+- id: CIS-2.3
+  name: Legal/warning banner configured
+  category: management_plane
+  schema_path: baseline.management.banner_configured   # PROPOSED
+  status: proposed_schema_extension
+  operator: "=="
+  expected_value: true
+  severity: low
+  remediation_template: "banner login ^C ... ^C"
+  remediation:
+    cisco: "banner login ^C Unauthorized access is prohibited. ^C"
+    juniper: "set system login message \"Unauthorized access is prohibited.\""
+  rationale: >
+    A warning banner is a legal prerequisite in many jurisdictions and
+    organizational policies for establishing that access is monitored
+    and unauthorized use is prohibited. Low technical severity, but
+    frequently required by policy/compliance frameworks.
+  references:
+    - source: "CIS Cisco IOS Benchmark, controls 1.3.1-1.3.3 (banner-text for exec/login/motd)"
+      url: "https://www.itsecure.hu/wp-content/uploads/2023/12/CIS_Cisco_IOS_15_Benchmark_v4.1.0.pdf"
+      access_note: "Verified against CIS Cisco IOS 15 Benchmark v4.1.0 table of contents."
+  vendor_limitations: none
+
+- id: CIS-2.4
+  name: CDP (Cisco Discovery Protocol) disabled globally
+  category: management_plane
+  schema_path: baseline.management.cdp_enabled   # PROPOSED
+  status: proposed_schema_extension
+  operator: "=="
+  expected_value: false
+  severity: low
+  remediation_template: "no cdp run"
+  remediation:
+    cisco: "no cdp run"
+    juniper: "N/A — Junos does not run CDP by default; LLDP is the cross-vendor equivalent worth its own future control."
+  rationale: >
+    CDP broadcasts device model, IOS version, and hostname to anything
+    on the same segment, which is useful reconnaissance for an
+    attacker with local network access. Low severity but essentially
+    free to disable if not needed for legitimate topology discovery.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control 2.1.2 'Set no cdp run'"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list."
+  vendor_limitations: "Cisco-only control. Compliance engine should mark this 'not applicable' (not 'fail') for non-Cisco vendors."
+
+- id: CIS-2.5
+  name: SSH RSA host key modulus at least 2048 bits
+  category: remote_access
+  schema_path: baseline.remote_access.rsa_key_modulus_bits   # PROPOSED
+  status: proposed_schema_extension
+  operator: ">="
+  expected_value: 2048
+  severity: medium
+  remediation_template: "crypto key generate rsa modulus 2048"
+  remediation:
+    cisco: "crypto key generate rsa modulus 2048"
+    juniper: "N/A — Junos SSH host keys are managed automatically and are not typically operator-specified inline in the config text; flag as not-config-checkable for Juniper."
+  rationale: >
+    Older/smaller RSA host keys weaken the cryptographic strength of
+    the SSH session setup itself, independent of protocol version.
+    2048 bits is the current practical minimum baseline.
+  references:
+    - source: "CIS Cisco IOS Benchmark, control 2.1.1.1.3 'Set modulus to >= 2048 for crypto key generate rsa'"
+      url: "https://www.tenable.com/audits/CIS_Cisco_IOS_17_v1.0.0_Level_1"
+      access_note: "Verified against CIS Cisco IOS 17 v1.0.0 L1 control list."
+  vendor_limitations: "Not reliably checkable from a static Juniper config dump — the key material/size isn't typically expressed as a plain config line the way Cisco's 'crypto key generate rsa modulus' command is. Consider marking this Cisco-only in the compliance engine."
+
+- id: CIS-2.6
+  name: SSH root login disabled
+  category: remote_access
+  schema_path: baseline.remote_access.root_ssh_login_enabled   # PROPOSED
+  status: proposed_schema_extension
+  operator: "=="
+  expected_value: false
+  severity: high
+  remediation_template: "set system services ssh root-login deny"
+  remediation:
+    cisco: "N/A — Cisco IOS has no 'root' account concept in the Unix sense; closest analog is restricting privilege level 15 access, already partially covered by CIS-1.4/AAA."
+    juniper: "set system services ssh root-login deny"
+  rationale: >
+    Direct SSH login as 'root' removes per-user accountability and
+    is a well-known brute-force target since the account name is
+    never a mystery. Juniper (and other Unix-derived NOS platforms)
+    should require named-user login plus privilege escalation instead.
+  references:
+    - source: "DISA Juniper SRX Services Gateway NDM STIG, finding V-223212 'The Juniper SRX Services Gateway must ensure SSH is disabled for root user logon'"
+      url: "https://stigviewer.com/stig/juniper_srx_sg_ndm/2024-06-10/finding/V-223212"
+      access_note: "Verified directly against stigviewer.com's published STIG finding text, accessed 2026-09-07."
+  vendor_limitations: "Juniper/Unix-derived platforms only. Mark 'not applicable' rather than 'fail' for Cisco IOS configs, since IOS has no directly equivalent concept."

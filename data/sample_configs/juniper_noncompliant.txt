@@ -1,0 +1,25 @@
+# PRISM sample fixture: juniper_noncompliant.set
+# Fictional device — all IPs use RFC 5737 documentation ranges.
+# Deliberately fails several CIS MVP controls for demo purposes.
+
+set system host-name LAB-FW-DOC04
+
+set system services telnet
+# Telnet enabled -> CIS-1.2 FAIL
+
+set system services ssh root-login allow
+# Root SSH login permitted -> CIS-2.6 (proposed extension) FAIL
+
+set system services web-management http
+# Cleartext HTTP management enabled -> CIS-1.3 FAIL
+
+set snmp community public authorization read-write
+# Default read-write SNMP community -> CIS-2.2 (proposed extension) FAIL
+
+# No 'set system syslog host ... any any' line present -> CIS-1.7 FAIL
+# No 'set system authentication-order' line present -> CIS-1.4 FAIL
+
+set interfaces ge-0/0/1 unit 0 family inet address 198.51.100.5/24
+
+set firewall filter OPEN-IN term allow-all then accept
+# No default-deny/discard term -> CIS-1.9 FAIL

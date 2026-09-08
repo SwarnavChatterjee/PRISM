@@ -38,4 +38,4 @@ React + TypeScript + Vite
 Existing PRISM Python engine + SQLite knowledge store
 ```
 
-The Streamlit application remains available as a fallback during migration. The React client uses the real upload, normalization, training, and compliance endpoints; it does not use placeholder metrics.
+The React client uses the real upload, normalization, training, and compliance endpoints; it does not use placeholder metrics.

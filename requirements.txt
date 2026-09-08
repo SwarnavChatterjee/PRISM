@@ -1,8 +1,7 @@
 # Core
 Python>=3.11
 
-# Web Framework & UI
-streamlit==1.28.1
+# Web Framework
 fastapi==0.104.1
 python-multipart==0.0.20
 uvicorn==0.24.0

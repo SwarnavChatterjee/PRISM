@@ -1,0 +1,25 @@
+! PRISM demo fixture: intentionally noncompliant Cisco IOS configuration
+! All addresses use RFC 5737 documentation ranges. Values are fictional.
+!
+hostname DEMO-FAULTY-RTR
+!
+! SSHv1 is enabled instead of SSHv2.
+ip ssh version 1
+!
+! Telnet is allowed on the management lines.
+line vty 0 4
+ transport input telnet
+!
+! Cleartext web management is enabled.
+ip http server
+!
+! AAA, password encryption, password length, and accounting are missing.
+enable password demo-only-placeholder
+!
+! No remote syslog destination is configured.
+!
+interface GigabitEthernet0/0
+ description DEMO-UNTRUSTED-UPLINK
+ ip address 198.51.100.10 255.255.255.0
+!
+end

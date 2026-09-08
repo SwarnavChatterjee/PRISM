@@ -1,0 +1,37 @@
+! PRISM sample fixture: cisco_noncompliant.cfg
+! Fictional device — all IPs use RFC 5737 documentation ranges.
+! Deliberately fails several CIS MVP controls for demo purposes.
+!
+hostname BRANCH-SW-DOC02
+!
+! No aaa new-model configured -> CIS-1.4 (aaa_enabled) FAIL
+!
+enable password letmein123
+! Reversible 'enable password' instead of hashed 'enable secret',
+! and no 'service password-encryption' below -> CIS-1.5 FAIL
+!
+cdp run
+! CDP left enabled -> CIS-2.4 (proposed extension) FAIL
+!
+ip http server
+! Cleartext HTTP management enabled -> CIS-1.3 FAIL
+!
+ip ssh version 1
+! Legacy SSHv1 -> CIS-1.1 FAIL
+!
+snmp-server community public RW
+! Default read-write community string -> CIS-2.2 (proposed extension) FAIL
+!
+! No 'logging host' line anywhere -> CIS-1.7 (syslog_configured) FAIL
+!
+interface GigabitEthernet0/1
+ description Access-uplink (fictional)
+ ip address 198.51.100.1 255.255.255.0
+!
+line vty 0 4
+ transport input telnet ssh
+ ! Telnet still permitted -> CIS-1.2 FAIL
+ exec-timeout 0 0
+ ! Timeout disabled (0 = never) -> CIS-2.1 (proposed extension) FAIL
+!
+end

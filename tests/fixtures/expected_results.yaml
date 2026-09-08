@@ -1,0 +1,100 @@
+# Expected results — PRISM test fixtures
+#
+# NOTE TO TEAM MEMBER 2: these numbers are derived by hand-counting the
+# pattern matches in each sample config against cisco_patterns.yaml /
+# juniper_patterns.yaml as of the version of those files committed
+# alongside this fixture. If either the sample configs or the pattern
+# files change, RE-RUN the pipeline and re-derive these numbers before
+# trusting them — do not assume they stay correct automatically.
+# Only the 10 controls that map to LIVE schema fields (CIS-1.1 through
+# CIS-1.10) are counted in expected_minimum_passed/failed below; the
+# CIS-2.x proposed-extension controls are listed separately as
+# "expected_extension_controls" so tests don't fail once those fields
+# are actually wired in and the counts change.
+
+cisco_compliant.txt:
+  vendor: cisco
+  expected_unmapped_lines: 0
+  expected_minimum_passed: 10          # CIS-1.1 through CIS-1.10, all pass
+  expected_failed_controls: []
+  expected_na_controls: []
+  expected_extension_controls_pass:
+    - CIS-2.1
+    - CIS-2.2
+    - CIS-2.3
+    - CIS-2.4
+    - CIS-2.5
+
+cisco_noncompliant.txt:
+  vendor: cisco
+  expected_unmapped_lines: 0
+  expected_minimum_failed: 6
+  expected_failed_controls:
+    - CIS-1.1   # SSHv1
+    - CIS-1.2   # Telnet permitted
+    - CIS-1.3   # HTTP server enabled
+    - CIS-1.4   # no aaa new-model
+    - CIS-1.5   # reversible enable password, no password-encryption
+    - CIS-1.7   # no syslog host
+  expected_na_controls: []
+  expected_extension_controls_fail:
+    - CIS-2.1   # exec-timeout 0 0
+    - CIS-2.2   # default public RW community
+    - CIS-2.4   # cdp run
+
+juniper_compliant.txt:
+  vendor: juniper
+  expected_unmapped_lines: 0
+  expected_minimum_passed: 7
+  expected_failed_controls: []
+  expected_na_controls:
+    - CIS-1.5   # password_encryption — not applicable to Junos
+    - CIS-2.4   # CDP — Cisco-only
+    - CIS-2.5   # RSA modulus — not config-checkable on Junos per vendor_limitations
+  expected_extension_controls_pass:
+    - CIS-2.1
+    - CIS-2.2
+    - CIS-2.3
+    - CIS-2.6
+
+juniper_noncompliant.txt:
+  vendor: juniper
+  expected_unmapped_lines: 0
+  expected_minimum_failed: 5
+  expected_failed_controls:
+    - CIS-1.2   # telnet present
+    - CIS-1.3   # web-management http present
+    - CIS-1.4   # no authentication-order
+    - CIS-1.7   # no syslog host
+    - CIS-1.9   # no default-discard firewall term
+  expected_na_controls:
+    - CIS-1.5
+    - CIS-2.4
+    - CIS-2.5
+  expected_extension_controls_fail:
+    - CIS-2.2   # default public read-write community
+    - CIS-2.6   # root SSH login allowed
+
+unknown_vendor.txt:
+  vendor: unknown
+  expected_unmapped_lines: 7
+  expected_unmapped_line_snippets:
+    - "zone-policy default = deny-all"
+    - "admin-access secure-shell version=2 timeout=600s"
+    - "legacy-console-access = enabled"
+    - "audit-stream target=198.51.100.10 proto=syslog"
+    - "credential-policy min-len=8 complexity=high"
+    - "discovery-broadcast = on"
+    - "mgmt-interface eth0 filter=MGMT-ONLY direction=inbound"
+  expected_ignored_noise_lines:
+    - "comment: this device was racked in lab bay 4"
+    - "uptime-report interval=daily"
+  expected_minimum_passed: 0
+  expected_minimum_failed: 0
+  expected_compliance_verdict: "not_yet_determinable"   # pipeline must not guess pass/fail before training
+  post_training_note: >
+    After a human trains on 'zone-policy default' (-> default_deny_present),
+    'admin-access secure-shell' (-> ssh_version + exec_timeout_minutes),
+    and 'audit-stream' (-> syslog_configured), re-running normalization
+    should reduce expected_unmapped_lines from 7 to 4 and allow a partial
+    compliance verdict to be computed on the newly-mapped fields.

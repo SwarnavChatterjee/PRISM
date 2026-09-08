@@ -1,0 +1,57 @@
+! PRISM sample fixture: cisco_compliant.cfg
+! Fictional device — all IPs use RFC 5737 documentation ranges.
+! Illustrates a device that satisfies the CIS MVP control set.
+!
+hostname EDGE-RTR-DOC01
+!
+aaa new-model
+aaa authentication login default local
+aaa accounting exec default start-stop group tacacs+
+aaa accounting commands 15 default start-stop group tacacs+
+!
+enable secret $9$fictionalHashValueOnly
+service password-encryption
+security passwords min-length 8
+!
+no cdp run
+no ip http server
+no ip http secure-server
+!
+ip domain-name doc-example.internal
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+!
+logging host 198.51.100.10
+logging trap informational
+!
+banner login ^C
+Unauthorized access to this device is prohibited and monitored.
+^C
+!
+snmp-server community DOC-EXAMPLE-RO RO
+snmp-server host 198.51.100.20 traps DOC-EXAMPLE-RO
+snmp-server enable traps snmp
+!
+ip access-list extended MGMT-IN
+ permit tcp 198.51.100.0 0.0.0.255 any eq 22
+ deny ip any any log
+!
+interface GigabitEthernet0/0
+ description WAN-uplink (fictional)
+ ip address 203.0.113.1 255.255.255.252
+ ip access-group MGMT-IN in
+!
+line con 0
+ exec-timeout 10 0
+line aux 0
+ transport input none
+ exec-timeout 10 0
+line vty 0 4
+ access-class MGMT-IN in
+ transport input ssh
+ exec-timeout 10 0
+ login authentication default
+!
+end

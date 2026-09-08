@@ -1,0 +1,36 @@
+# PRISM sample fixture: juniper_compliant.set
+# Fictional device — all IPs use RFC 5737 documentation ranges.
+# Junos 'set' style export (show configuration | display set).
+# Illustrates a device that satisfies the CIS MVP control set.
+
+set system host-name EDGE-FW-DOC03
+set system domain-name doc-example.internal
+
+set system authentication-order [ tacplus password ]
+set system login retry-options tries-before-disconnect 3
+set system login password minimum-length 8
+
+set system services ssh protocol-version v2
+set system services ssh root-login deny
+delete system services telnet
+delete system services web-management http
+
+set system syslog host 198.51.100.10 any any
+set system accounting events [ login change-log interactive-commands ]
+
+set system login message "Unauthorized access is prohibited and monitored."
+
+delete snmp community public
+set snmp community DOC-EXAMPLE-RO authorization read-only
+
+set firewall filter MGMT-IN term allow-ssh from source-address 198.51.100.0/24
+set firewall filter MGMT-IN term allow-ssh from protocol tcp
+set firewall filter MGMT-IN term allow-ssh from destination-port 22
+set firewall filter MGMT-IN term allow-ssh then accept
+set firewall filter MGMT-IN term default then log
+set firewall filter MGMT-IN term default then discard
+
+set interfaces ge-0/0/0 unit 0 family inet address 203.0.113.5/30
+set interfaces ge-0/0/0 unit 0 family inet filter input MGMT-IN
+
+set system login idle-timeout 10
