@@ -2,7 +2,7 @@
 
 ## For the SIH Team
 
-This document is for our 5-person team during the 5-day sprint.
+This document covers the workflow for changes to the current PRISM codebase.
 
 ### Workflow
 
@@ -11,7 +11,7 @@ This document is for our 5-person team during the 5-day sprint.
    git pull origin main
 ```
 
-2. **Work on your assigned module** (see [Final Implementation Plan](docs/final-implementation-plan.md))
+2. **Work on the relevant module** (see [Architecture](docs/ARCHITECTURE.md) and the [README](README.md))
 
 3. **Commit frequently** (at least once per day):
 ```bash
@@ -32,18 +32,13 @@ This document is for our 5-person team during the 5-day sprint.
 5. **Never** force push or rewrite history (`git push --force`) — it makes it hard to track what everyone did.
 
 ### Commit Message Format
-cat > .env.example << 'EOF'
-# Database
-DATABASE_URL=sqlite:///compliance.db
 
-# Framework (default)
-DEFAULT_FRAMEWORK=cis_benchmarks
+Use a short imperative message that names the affected area, for example:
 
-# Claude API (for Tier 3 LLM fallback)
-ANTHROPIC_API_KEY=sk-...  # Get from https://console.anthropic.com/
+```text
+Frontend: improve finding filters
+Engine: add Juniper pattern mapping
+Tests: cover faulty Cisco demo config
+```
 
-# Environment
-ENVIRONMENT=development  # or production
-
-# Logging
-LOG_LEVEL=INFO
+Keep generated files, local databases, credentials, and dependency folders out of commits. The repository `.gitignore` is the source of truth for those exclusions.

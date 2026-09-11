@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -18,6 +18,8 @@ class Finding:
     source_line: int
     raw_config_line: str
     remediation_command: str
+    rationale: str = ""
+    references: List[Dict[str, Any]] = field(default_factory=list)
 
 
 def load_framework(framework_name: str) -> List[Dict[str, Any]]:
@@ -114,6 +116,8 @@ class ComplianceEngine:
             source_line=source.get("source_line", -1),
             raw_config_line=source.get("raw", "N/A"),
             remediation_command=rule.get("remediation_template", rule.get("remediation", "N/A")),
+            rationale=rule.get("rationale", ""),
+            references=rule.get("references", []) or [],
         )
 
 

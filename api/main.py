@@ -11,6 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -18,6 +19,7 @@ from src.compliance.engine import evaluate_device
 from src.ingestion.uploader import decode_config, detect_vendor
 from src.normalization.engine import normalize_config
 from src.training.loop import TrainingLoop
+from src.reporting.pdf import generate_compliance_pdf
 
 
 class AnalysisResponse(BaseModel):
@@ -104,4 +106,19 @@ def train(request: TrainingRequest) -> AnalysisResponse:
         raw_config=request.raw_config,
         device_config=data,
         compliance=evaluate_device(data, "cis_benchmarks"),
+    )
+
+
+@app.post("/api/report/pdf")
+def create_pdf_report(analysis: AnalysisResponse) -> Response:
+    """Create a downloadable PDF from a completed deterministic analysis."""
+    try:
+        pdf = generate_compliance_pdf(_model_dump(analysis))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    safe_name = Path(analysis.filename or "configuration").stem.replace('"', "")
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}-compliance-report.pdf"'},
     )

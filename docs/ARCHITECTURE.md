@@ -1,106 +1,63 @@
-# Architecture Document — PRISM
-## For SIH Judges
+# PRISM Architecture
 
----
+PRISM is a local network-configuration compliance scanner. The current implementation accepts uploaded text configurations, detects Cisco or Juniper syntax, normalizes known lines into a small canonical baseline, and evaluates that baseline against YAML-defined CIS controls.
 
-## Page 1: System Overview
+## Runtime flow
 
-### Problem
-Modern enterprises have heterogeneous networks (Cisco, Juniper, Palo Alto, etc.) that must comply with security frameworks (CIS, NIST, STIG, ISO). Each vendor uses different CLI syntax, making manual compliance checking slow and error-prone. Existing tools are vendor-locked and require code rewrites for new device types.
-
-### Solution
-PRISM is an AI-augmented, vendor-agnostic compliance engine that:
-1. **Normalizes** any vendor's config into a canonical schema using a three-tier AI cascade
-2. **Evaluates** against chosen compliance framework using data-driven rules
-3. **Learns** new vendors automatically through human-in-the-loop training
-4. **Reports** findings with exact remediation commands per device
-
-### Architecture Diagram
-
-### Data Flow (One Config File's Journey)
-
-1. **Ingestion:** Raw Juniper config uploaded → vendor guessed as "juniper"
-2. **Normalization Tier 1:** Line `set system services ssh root-login deny` → regex matches → maps to `baseline.remote_access.ssh_enabled = false` (confidence 1.0)
-3. **Normalization Tier 2:** Unknown line → embedding similarity finds 85% match to known "SSH" pattern → maps with confidence 0.85
-4. **Normalization Tier 3:** Truly unknown line → Claude suggests category, human confirms → persisted to `vendor_patterns` table
-5. **Compliance:** Normalized config checked against CIS rules → 15 controls evaluated → 12 pass, 3 fail
-6. **Reporting:** PDF generated → device ID, findings table, remediation commands → downloaded by user
-
----
-
-## Page 2: Technical Design
-
-### Key Design Decisions & Tradeoffs
-
-| Decision | Reasoning |
-|---|---|
-| **Regex-first, LLM-last** | Cost & latency. Regex handles 80%, embeddings handle 15%, LLM only for 5% → lower cost than all-LLM approach |
-| **Human-confirmed learning** | Trust. Never auto-commit a pattern without human review → guarantees correctness, prevents hallucination poisoning |
-| **Data-driven rules** | Extensibility. Framework rules stored as YAML, not code → adding CIS, NIST, STIG, ISO requires no code change |
-| **SQLite for MVP** | Speed to demo. Same schema as PostgreSQL → easy to upgrade later; no multi-user concurrency needed for 5-day sprint |
-| **React + FastAPI for UI** | Dedicated frontend and API layers support a maintainable production web client |
-| **Static file upload (not live pull)** | Demo reliability. Live SSH adds credential management, network access, vendor-driver complexity → risky on demo day |
-
-### Confidence Scoring
-
-Every normalized field carries a confidence score:
-- `1.0` — Exact regex match (certain)
-- `0.7–0.9` — Embedding similarity match (high confidence)
-- `pending` — LLM suggestion awaiting human confirmation (unconfirmed)
-
-Compliance engine flags low-confidence matches as "needs review" rather than silent pass/fail.
-
-### Explainability & Audit Trail
-
-**Every finding traces back to source:**
-```json
-{
-  "control_id": "CIS_1.1",
-  "status": "fail",
-  "severity": "critical",
-  "source_line": 12,
-  "raw_config_line": "no ip ssh version 2",
-  "remediation": "ip ssh version 2"
-}
+```text
+Configuration file
+        |
+        v
+FastAPI upload endpoint
+        |
+        v
+Vendor detection + YAML regex normalization
+        |
+        v
+Canonical baseline + unmapped source lines
+        |
+        v
+CIS benchmark evaluator
+        |
+        v
+Compliance JSON returned to the React dashboard
+        |
+        v
+Deterministic PDF report export
 ```
 
-This satisfies enterprise audit requirements (NFR4).
+The frontend is intentionally separate from the engine. It communicates through the existing FastAPI endpoints and does not contain a second parser or a second data source.
 
-### Scalability & Roadmap
+## Main components
 
-**MVP (5-day sprint):**
-- Single framework (CIS)
-- 2–3 known vendors (Cisco, Juniper)
-- File upload only
-- Single-machine deployment
+| Component | Responsibility |
+|---|---|
+| `api/main.py` | Upload and training HTTP endpoints, CORS, application wiring |
+| `src/ingestion` | Validate supported text uploads and read their contents |
+| `src/normalization` | Detect vendors and map known lines using YAML regex patterns |
+| `src/schema` | Define the canonical baseline model and provenance metadata |
+| `src/compliance` | Load framework YAML and produce pass/fail findings |
+| `src/training` | Persist human-confirmed mappings and re-run normalization |
+| `src/storage` | Initialize and access the local SQLite knowledge store |
+| `web/src` | React/TypeScript dashboard for upload, analysis, findings, and training |
 
-**Phase 2 (Post-SIH):**
-- Multi-framework support via taxonomy mapping
-- Live device polling via Netmiko/NAPALM
-- FastAPI backend + React frontend
-- PostgreSQL database
+## Data and trust boundaries
 
-**Phase 3 (Enterprise):**
-- Kubernetes + microservices
-- Multi-tenant SaaS model
-- Trend dashboards
-- CI/CD integration
+- Framework rules live in `data/frameworks/cis_benchmarks.yaml`.
+- Vendor patterns live in `data/vendor_patterns/`.
+- Demo inputs are plain text files under `data/sample_configs/`.
+- The API returns source-line references, confidence, provenance, and remediation commands with each analysis.
+- Unknown lines remain unmapped until a user explicitly confirms a training mapping.
+- The local SQLite database is runtime state and is ignored by Git.
 
-### Technology Stack
+## Current scope
 
-| Layer | MVP | Production |
-|---|---|---|
-| **Core** | Python 3.11 | Python 3.11+ |
-| **Normalization** | regex + sentence-transformers + Claude API | Same, with fine-tuned domain model |
-| **Rules** | YAML files + Python evaluator | Same architecture, DB-driven UI |
-| **Frontend** | React + TypeScript + Vite | React + MUI |
-| **Database** | SQLite | PostgreSQL |
-| **Deployment** | Single VM | Kubernetes + load balancer |
-| **Reporting** | ReportLab (PDF) | Same + dashboard/API |
+The implementation is deterministic and local. It does not currently include live device polling, embedding similarity, or an LLM fallback. PDF generation is available through the reporting package and `/api/report/pdf`.
 
----
+## Development commands
 
-**Document Version:** 1.0  
-**Date:** [Today]  
-**Status:** SIH Submission (MVP)  
-**Contact:** [Team Lead Email]
+```bash
+pytest -q
+uvicorn api.main:app --reload --port 8000
+cd web && npm install && npm run dev
+```

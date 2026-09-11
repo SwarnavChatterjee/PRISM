@@ -20,6 +20,8 @@ export interface Finding {
   source_line: number;
   raw_config_line: string;
   remediation_command: string;
+  rationale?: string;
+  references?: { source?: string; url?: string }[];
 }
 
 export interface UnmappedLine {

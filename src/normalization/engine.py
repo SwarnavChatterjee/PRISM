@@ -7,7 +7,6 @@ silently turn an unknown line into a trusted control.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 from src.normalization.patterns import load_vendor_patterns, match_line

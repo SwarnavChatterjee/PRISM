@@ -4,6 +4,7 @@ import {
   analyzeConfiguration,
   trainMapping,
   exportAnalysisJson,
+  exportCompliancePdf,
   SCHEMA_OPTIONS,
 } from "./api";
 import {
@@ -972,9 +973,14 @@ function CompliancePage({ analysis, onNavigate }: { analysis: Analysis | null; o
         title="CIS Benchmark Compliance"
         desc="Formal audit against CIS security controls. Click any finding to inspect observed lines and remediation."
         action={
-          <button className="btn btn-secondary" onClick={() => exportAnalysisJson(compliance, `${analysis.filename}-compliance.json`)}>
-            <Download size={13} /> Export Report
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn btn-secondary" onClick={() => exportAnalysisJson(compliance, `${analysis.filename}-compliance.json`)}>
+              <Download size={13} /> JSON
+            </button>
+            <button className="btn btn-primary" onClick={() => void exportCompliancePdf(analysis)}>
+              <Download size={13} /> PDF Report
+            </button>
+          </div>
         }
       />
 
@@ -1203,7 +1209,6 @@ function DevicesPage({ analysis, onNavigate }: { analysis: Analysis | null; onNa
     </div>
   );
 }
-
 /* ============================================================
    Page 7: Policies
    ============================================================ */

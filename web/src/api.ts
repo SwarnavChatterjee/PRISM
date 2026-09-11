@@ -84,3 +84,24 @@ export function exportAnalysisJson(data: unknown, filename = "prism-compliance-r
   document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
 }
+
+export async function exportCompliancePdf(analysis: Analysis): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/report/pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(analysis),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail ?? `PDF export failed with status ${response.status}`);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${analysis.filename.replace(/\.[^.]+$/, "")}-compliance-report.pdf`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}
