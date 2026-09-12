@@ -80,7 +80,7 @@ function StatCard({
     red:     { icon: "rgba(248, 113, 113, 0.12)", iconBorder: "rgba(248, 113, 113, 0.25)", iconColor: "var(--red-400)", val: "var(--red-400)" },
     amber:   { icon: "rgba(244, 212, 87, 0.12)", iconBorder: "rgba(244, 212, 87, 0.25)", iconColor: "var(--amber-400)", val: "var(--amber-400)" },
     blue:    { icon: "rgba(96, 165, 250, 0.12)", iconBorder: "rgba(96, 165, 250, 0.25)", iconColor: "var(--blue-400)", val: "var(--blue-400)" },
-    purple:  { icon: "rgba(167, 139, 250, 0.12)", iconBorder: "rgba(167, 139, 250, 0.25)", iconColor: "var(--purple-400)", val: "var(--purple-400)" },
+    purple:  { icon: "var(--purple-soft-bg)", iconBorder: "var(--purple-soft-border)", iconColor: "var(--purple-400)", val: "var(--purple-400)" },
     default: { icon: "var(--bg-hover)", iconBorder: "var(--border-default)", iconColor: "var(--text-secondary)", val: "var(--text-primary)" },
   };
   const t = tones[tone];
@@ -342,103 +342,7 @@ function SectionHeader({
 }
 
 /* ============================================================
-   Right Panel - Project Details
-   ============================================================ */
-function RightPanel({ analysis, score }: { analysis: Analysis | null; score: number }) {
-  return (
-    <div className="linear-right-panel">
-      {/* Project Header */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <div style={{
-            width: 24, height: 24, borderRadius: 6,
-            background: "linear-gradient(135deg, var(--brand-500), var(--brand-600))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 700, color: "#fff",
-          }}>P</div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-            PRISM
-          </span>
-        </div>
-        <p style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
-          {analysis
-            ? `${analysis.vendor.toUpperCase()} · ${Math.round(analysis.detection_confidence * 100)}% confidence`
-            : "Ready for configuration analysis."}
-        </p>
-      </div>
-
-      {/* Progress */}
-      <div>
-        <p className="label" style={{ marginBottom: 10 }}>Progress</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-              <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>Score</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: "var(--brand-400)" }}>{score}%</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-bar-fill" style={{ width: `${score}%` }} />
-            </div>
-          </div>
-          {analysis && (
-            <>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>Controls Passed</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--green-400)" }}>
-                    {analysis.compliance.passed}/{analysis.compliance.total_controls}
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-bar-fill" style={{
-                    width: `${analysis.compliance.total_controls > 0 ? (analysis.compliance.passed / analysis.compliance.total_controls) * 100 : 0}%`,
-                    background: "var(--green-400)"
-                  }} />
-                </div>
-              </div>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>Critical Issues</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "var(--red-400)" }}>{analysis.compliance.critical_count}</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-bar-fill" style={{
-                    width: `${analysis.compliance.total_controls > 0 ? (analysis.compliance.critical_count / analysis.compliance.total_controls) * 100 : 0}%`,
-                    background: "var(--red-400)"
-                  }} />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Sparkline chart placeholder */}
-        <div style={{
-          marginTop: 16,
-          background: "var(--bg-raised)",
-          border: "1px solid var(--border-default)",
-          borderRadius: 8,
-          padding: "10px 12px",
-          height: 72,
-          display: "flex",
-          alignItems: "flex-end",
-          gap: 3,
-        }}>
-          {[30, 55, 45, 70, 60, 80, 65, 85, 72, 90].map((h, i) => (
-            <div key={i} style={{
-              flex: 1, height: `${h}%`,
-              background: i === 9 ? "var(--brand-500)" : "rgba(208, 161, 18, 0.3)",
-              borderRadius: 2,
-            }} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   Main Application - Linear 3-Column Layout
+   Main Application - Linear Workspace Layout
    ============================================================ */
 export default function App() {
   const [page, setPage] = useState<Page>("overview");
@@ -503,11 +407,12 @@ export default function App() {
       <aside className="linear-sidebar">
         {/* Header / Branding */}
         <div className="linear-sidebar-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="brand-lockup">
             <img className="brand-logo" src="/assets/prism-logo.png" alt="PRISM logo" />
-            <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: "-0.01em", color: "var(--text-primary)" }}>
-              PRISM
-            </span>
+            <div>
+              <div className="brand-wordmark">PRISM</div>
+              <div className="brand-tagline">Network compliance</div>
+            </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             {busy && <Loader2 size={13} className="animate-spin" style={{ color: "var(--brand-400)" }} />}
@@ -515,7 +420,7 @@ export default function App() {
         </div>
 
         {/* New Scan Button */}
-        <div style={{ padding: "10px 10px 4px" }}>
+        <div style={{ padding: "14px 14px 8px" }}>
           <button
             className="btn btn-primary"
             style={{ width: "100%", justifyContent: "flex-start", gap: 8, fontSize: 12, padding: "7px 10px" }}
@@ -526,7 +431,7 @@ export default function App() {
         </div>
 
         {/* Navigation */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "4px 10px" }} className="no-scrollbar">
+        <div style={{ flex: 1, overflowY: "auto", padding: "8px 14px 18px" }} className="no-scrollbar">
           <div style={{ marginBottom: 4 }}>
             {NAV_ITEMS.map((item) => (
               <button
@@ -655,10 +560,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* ============================================================
-          COLUMN 3: Right Properties Panel (310px)
-         ============================================================ */}
-      <RightPanel analysis={analysis} score={score} />
     </div>
   );
 }
