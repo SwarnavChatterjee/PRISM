@@ -12,7 +12,7 @@ import {
   ChevronDown, ChevronRight, Loader2, Check, Copy,
   Download, Server, Upload, X, Activity,
   Layers, Terminal, ArrowRight, BarChart3, Settings,
-  ListFilter, Plus, Zap, Moon, Sun,
+  ListFilter, Plus, Moon, Sun,
 } from "lucide-react";
 
 /* ============================================================
@@ -119,12 +119,24 @@ function UploadZone({ file, onFile }: {
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [loadingFile, setLoadingFile] = useState(false);
+
+  const selectFile = (nextFile: File | null) => {
+    if (!nextFile) {
+      onFile(null);
+      return;
+    }
+
+    setLoadingFile(true);
+    onFile(nextFile);
+    window.setTimeout(() => setLoadingFile(false), 450);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
     const f = e.dataTransfer.files[0];
-    if (f) onFile(f);
+    if (f) selectFile(f);
   };
 
   return (
@@ -141,10 +153,18 @@ function UploadZone({ file, onFile }: {
         type="file"
         accept=".cfg,.conf,.config,.set,.txt,.log"
         style={{ display: "none" }}
-        onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+        onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
       />
 
-      {file ? (
+      {loadingFile ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+          <Loader2 size={22} className="animate-spin" style={{ color: "var(--brand-400)" }} />
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>Loading configuration…</p>
+            <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>Preparing file for analysis</p>
+          </div>
+        </div>
+      ) : file ? (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12,
@@ -337,36 +357,14 @@ function RightPanel({ analysis, score }: { analysis: Analysis | null; score: num
             fontSize: 11, fontWeight: 700, color: "#fff",
           }}>P</div>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
-            {analysis?.filename ?? "Project Solar Sailer"}
+            PRISM
           </span>
         </div>
         <p style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
           {analysis
             ? `${analysis.vendor.toUpperCase()} · ${Math.round(analysis.detection_confidence * 100)}% confidence`
-            : "Escape from the game grid and reach the MCP."}
+            : "Ready for configuration analysis."}
         </p>
-      </div>
-
-      {/* Properties */}
-      <div>
-        <p className="label" style={{ marginBottom: 10 }}>Properties</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {[
-            { label: "Status", value: analysis ? "Active Scan" : "In Progress", dot: analysis ? "var(--brand-400)" : "#fbbf24" },
-            { label: "Lead", value: analysis ? analysis.vendor.toUpperCase() : "Erin Frey" },
-            { label: "Members", value: "EF" },
-            { label: "Target date", value: "19 Oct" },
-            { label: "Team", value: "⚡ ENG" },
-          ].map(({ label, value, dot }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{label}</span>
-              <span style={{ fontSize: 11, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 5 }}>
-                {dot && <span style={{ width: 7, height: 7, borderRadius: 99, background: dot }} />}
-                {value}
-              </span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Progress */}
@@ -566,38 +564,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* Favorites Section */}
-          <div style={{ marginTop: 12 }}>
-            <p className="linear-sidebar-title">Favorites</p>
-            {["GitHub Integration", "Warp Mode"].map(name => (
-              <button key={name} className="linear-sidebar-item">
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Zap size={13} style={{ color: "var(--text-tertiary)" }} />
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{name}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Teams Section */}
-          <div style={{ marginTop: 8 }}>
-            <p className="linear-sidebar-title">Your teams</p>
-            {["Design", "Engineering"].map(team => (
-              <button key={team} className="linear-sidebar-item">
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{
-                    width: 14, height: 14, borderRadius: 4, fontSize: 8, fontWeight: 700,
-                    background: team === "Engineering" ? "var(--brand-500)" : "var(--bg-active)",
-                    color: team === "Engineering" ? "#121212" : "var(--text-secondary)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    {team[0]}
-                  </span>
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{team}</span>
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
       </aside>
 
@@ -608,7 +574,7 @@ export default function App() {
         {/* Topbar */}
         <div className="linear-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>Project Solar Sailer</span>
+            <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>PRISM</span>
             <span style={{ color: "var(--border-default)" }}>·</span>
             <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
               {NAV_ITEMS.find(n => n.id === page)?.label}
