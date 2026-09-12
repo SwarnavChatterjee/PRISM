@@ -11,7 +11,7 @@ import {
   ShieldCheck, AlertTriangle, FileCode2, Sparkles,
   ChevronDown, ChevronRight, Loader2, Check, Copy,
   Download, Server, Upload, X, Activity,
-  Layers, Terminal, ArrowRight, BarChart3, Settings,
+  Layers, Terminal, ArrowRight, ArrowLeft, BarChart3, Settings,
   ListFilter, Plus, Moon, Sun,
 } from "lucide-react";
 
@@ -345,6 +345,9 @@ function SectionHeader({
    Main Application - Linear Workspace Layout
    ============================================================ */
 export default function App() {
+  const [authenticated, setAuthenticated] = useState(() =>
+    localStorage.getItem("prism-demo-session") === "active"
+  );
   const [page, setPage] = useState<Page>("overview");
   const [theme, setTheme] = useState<"dark" | "light">(() =>
     localStorage.getItem("prism-theme") === "light" ? "light" : "dark"
@@ -359,6 +362,23 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("prism-theme", theme);
   }, [theme]);
+
+  function enterDashboard() {
+    localStorage.setItem("prism-demo-session", "active");
+    setAuthenticated(true);
+  }
+
+  const score = useMemo(() => {
+    if (!analysis || !analysis.compliance.total_controls) return 0;
+    return Math.round((analysis.compliance.passed / analysis.compliance.total_controls) * 100);
+  }, [analysis]);
+
+  const failedCount = analysis?.compliance.failed ?? 0;
+  const unmappedCount = analysis?.device_config.unmapped_lines.length ?? 0;
+
+  if (!authenticated) {
+    return <LandingPage theme={theme} onEnter={enterDashboard} />;
+  }
 
   async function handleAnalyze(fileToAnalyze?: File, vendorToUse?: string) {
     const file = fileToAnalyze || selectedFile;
@@ -391,14 +411,6 @@ export default function App() {
     } finally { setBusy(false); }
   }
 
-  const score = useMemo(() => {
-    if (!analysis || !analysis.compliance.total_controls) return 0;
-    return Math.round((analysis.compliance.passed / analysis.compliance.total_controls) * 100);
-  }, [analysis]);
-
-  const failedCount = analysis?.compliance.failed ?? 0;
-  const unmappedCount = analysis?.device_config.unmapped_lines.length ?? 0;
-
   return (
     <div className="linear-app-layout">
       {/* ============================================================
@@ -408,7 +420,7 @@ export default function App() {
         {/* Header / Branding */}
         <div className="linear-sidebar-header">
           <div className="brand-lockup">
-            <img className="brand-logo" src="/assets/prism-logo.png" alt="PRISM logo" />
+            <img className="brand-logo" src={`/assets/prism-logo-${theme}.png`} alt="PRISM logo" />
             <div>
               <div className="brand-wordmark">PRISM</div>
               <div className="brand-tagline">Network compliance</div>
@@ -479,6 +491,18 @@ export default function App() {
         {/* Topbar */}
         <div className="linear-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              className="back-to-landing"
+              type="button"
+              onClick={() => {
+                localStorage.removeItem("prism-demo-session");
+                setAuthenticated(false);
+              }}
+              title="Return to intro"
+            >
+              <ArrowLeft size={13} />
+              <span>Intro</span>
+            </button>
             <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>PRISM</span>
             <span style={{ color: "var(--border-default)" }}>·</span>
             <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
@@ -560,6 +584,86 @@ export default function App() {
         </div>
       </main>
 
+    </div>
+  );
+}
+
+/* ============================================================
+   Intro / Demo Login
+   ============================================================ */
+function LandingPage({ theme, onEnter }: { theme: "dark" | "light"; onEnter: () => void }) {
+  return (
+    <div className="landing-shell">
+      <header className="landing-nav">
+        <div className="brand-lockup">
+          <img className="brand-logo" src={`/assets/prism-logo-${theme}.png`} alt="PRISM logo" />
+          <div>
+            <div className="brand-wordmark">PRISM</div>
+            <div className="brand-tagline">Network compliance</div>
+          </div>
+        </div>
+        <div className="landing-nav-actions">
+          <button className="landing-link" onClick={onEnter}>Sign in</button>
+          <button className="landing-dashboard-button" onClick={onEnter}>
+            Dashboard <ArrowRight size={14} />
+          </button>
+        </div>
+      </header>
+
+      <main className="landing-main">
+        <section className="landing-hero">
+          <div className="landing-copy">
+            <div className="landing-eyebrow"><span /> Network security, clarified</div>
+            <h1>Make every configuration <em>audit-ready.</em></h1>
+            <p>
+              PRISM turns raw network configurations into clear, explainable compliance decisions - with every finding tied back to the source.
+            </p>
+            <div className="landing-actions">
+              <button className="google-login-button" onClick={onEnter}>
+                <span className="google-mark">G</span>
+                <span>Continue with Google</span>
+                <span className="demo-pill">Demo</span>
+              </button>
+              <button className="landing-secondary-button" onClick={onEnter}>
+                Open dashboard <ArrowRight size={14} />
+              </button>
+            </div>
+            <p className="landing-disclaimer">Demo access only. No account or data is sent anywhere.</p>
+          </div>
+
+          <div className="landing-preview" aria-label="PRISM dashboard preview">
+            <div className="preview-window-bar">
+              <span className="preview-dot red" /><span className="preview-dot yellow" /><span className="preview-dot green" />
+              <span className="preview-url">prism / compliance</span>
+            </div>
+            <div className="preview-content">
+              <div className="preview-sidebar">
+                <div className="preview-logo">P</div>
+                <span className="preview-active" />
+                <span /><span /><span /><span />
+              </div>
+              <div className="preview-dashboard">
+                <div className="preview-kicker">NETWORK SECURITY</div>
+                <div className="preview-title">Compliance dashboard</div>
+                <div className="preview-stat-row">
+                  <div><strong>84%</strong><small>COMPLIANCE SCORE</small></div>
+                  <div><strong>10</strong><small>CONTROLS CHECKED</small></div>
+                  <div><strong className="preview-danger">3</strong><small>OPEN FINDINGS</small></div>
+                </div>
+                <div className="preview-card">
+                  <div className="preview-card-title">Security posture</div>
+                  <div className="preview-bars"><span /><span /><span /><span /><span /><span /><span /></div>
+                </div>
+                <div className="preview-finding"><span className="preview-status" /> SSH version 2 enforced <b>PASS</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="landing-footer">
+        <span>PRISM</span><span>Deterministic first. Explainable always.</span>
+      </footer>
     </div>
   );
 }
